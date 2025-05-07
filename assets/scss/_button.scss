@@ -1,0 +1,162 @@
+@import 'colors';  // Import color variables
+
+.btn {
+  font-size: 14px;
+  font-weight: 500;
+  padding-bottom: 30px;
+}
+
+.btn-tab {
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.btn--primary {
+  @extend .btn;
+  background-color: $primary-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($primary-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--primary-outline {
+  @extend .btn;
+  color: $primary-color;
+  background-color: #fff;
+  border: 1px solid $primary-color;
+
+  &:hover {
+    background-color: $primary-color;
+    color: #fff!important;
+    border: none;
+  }
+}
+
+.btn--secondary {
+  @extend .btn;
+  background-color: $secondary-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($secondary-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--secondary-outline {
+  @extend .btn;
+  color: $secondary-color;
+  background-color: #fff;
+  border: 1px solid $secondary-color;
+
+  &:hover {
+    background-color: $secondary-color;
+    color: #fff!important;
+    border: none;
+  }
+}
+
+.btn--success {
+  @extend .btn;
+  background-color: $success-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($success-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--success-outline {
+  @extend .btn;
+  color: $success-color;
+  background-color: #fff;
+  border: 1px solid $success-color;
+
+  &:hover {
+    background-color: $success-color;
+    color: #fff!important;
+    border: none;
+  }
+}
+
+.btn--info {
+  @extend .btn;
+  background-color: $info-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($info-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--info-outline {
+  @extend .btn;
+  color: $info-color;
+  background-color: #fff;
+  border: 1px solid $info-color;
+
+  &:hover {
+    background-color: $info-color;
+    color: #fff!important;
+    border: none;
+  }
+}
+
+.btn--warning {
+  @extend .btn;
+  background-color: $warning-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($warning-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--warning-outline {
+  @extend .btn;
+  color: $warning-color;
+  background-color: #fff;
+  border: 1px solid $warning-color;
+
+  &:hover {
+    background-color: $warning-color;
+    color: #fff!important;
+    border: none;
+  }
+}
+
+.btn--danger {
+  @extend .btn;
+  background-color: $danger-color;
+  color: #fff;
+
+  &:hover {
+    background-color: darken($danger-color, 10%);
+    border: none;
+    color: #fff!important;
+  }
+}
+
+.btn--danger-outline {
+  @extend .btn;
+  color: $danger-color;
+  background-color: #fff;
+  border: 1px solid $danger-color;
+
+  &:hover {
+    background-color: $danger-color;
+    color: #fff!important;
+    border: none;
+  }
+}

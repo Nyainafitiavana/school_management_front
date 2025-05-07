@@ -1,0 +1,21 @@
+@use 'colors' as *;
+
+.ant-notification-notice-message, .ant-notification-notice-icon, .ant-notification-close-icon {
+  color: #fff!important;
+}
+
+.custom-success-notification {
+  background-color: $success-color!important;
+  color: #fff!important;
+}
+
+.custom-warning-notification {
+  background-color: $warning-color!important;
+  color: #fff!important;
+}
+
+.custom-error-notification {
+  background-color: $danger-color!important;
+  color: #fff!important;
+}
+

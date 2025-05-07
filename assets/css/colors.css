@@ -1,0 +1,47 @@
+.primary-color {
+    color: #3490dc;
+}
+
+.secondary-color {
+    color: #656565;
+}
+
+.success-color {
+    color: #38c172;
+}
+
+.info-color {
+    color: #05c5c5;
+}
+
+.warning-color {
+    color: #e5b33e;
+}
+
+.danger-color {
+    color: #ff5959;
+}
+
+.primary-background-color {
+    background-color: #3490dc;
+}
+
+.secondary-background-color {
+    background-color: #656565;
+}
+
+.success-background-color {
+    background-color: #38c172;
+}
+
+.info-background-color {
+    background-color: #05c5c5;
+}
+
+.warning-background-color {
+    background-color: #e5b33e;
+}
+
+.danger-background-color {
+    background-color: #ff5959;
+}

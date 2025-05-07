@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+// Import all colors variables
+@import 'colors';
+@import 'button';
+@import 'notification';
+@import 'mix';

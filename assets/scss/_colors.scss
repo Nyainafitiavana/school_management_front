@@ -1,0 +1,56 @@
+// _colors.scss
+
+$primary-color: #3490dc;
+$secondary-color: #656565;
+$success-color: #38c172;
+$info-color: #05c5c5;
+$warning-color: #e5b33e;
+$danger-color: #ff5959;
+
+.primary-color {
+  color: $primary-color;
+}
+
+.secondary-color {
+  color: $secondary-color;
+}
+
+.success-color {
+  color: $success-color;
+}
+
+.info-color {
+  color: $info-color;
+}
+
+.warning-color {
+  color: $warning-color;
+}
+
+.danger-color {
+  color: $danger-color;
+}
+
+.primary-background-color {
+  background-color: $primary-color;
+}
+
+.secondary-background-color {
+  background-color: $secondary-color;
+}
+
+.success-background-color {
+  background-color: $success-color;
+}
+
+.info-background-color {
+  background-color: $info-color;
+}
+
+.warning-background-color {
+  background-color: $warning-color;
+}
+
+.danger-background-color {
+  background-color: $danger-color;
+}

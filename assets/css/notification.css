@@ -1,0 +1,18 @@
+.ant-notification-notice-message, .ant-notification-notice-icon, .ant-notification-close-icon {
+    color: #fff !important;
+}
+
+.custom-success-notification {
+    background-color: #38c172 !important;
+    color: #fff !important;
+}
+
+.custom-warning-notification {
+    background-color: #e5b33e !important;
+    color: #fff !important;
+}
+
+.custom-error-notification {
+    background-color: #ff5959 !important;
+    color: #fff !important;
+}
