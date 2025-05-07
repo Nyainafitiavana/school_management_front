@@ -8,3 +8,7 @@ export interface ExecuteResponse {
     message: string;
     statusCode: number;
 }
+
+export interface NoPaginateData<T> {
+    data: T;
+}

@@ -10,7 +10,6 @@
     password: '',
   });
 
-  const router = useRouter();
   const onFinish = async (values: FormState) => {
     const {email, password} = values;
 
@@ -18,7 +17,6 @@
       const data: AuthInterface = await loginUser({email, password});
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('userId', data.id.toString());
-      localStorage.setItem('is_admin', data.is_admin.toString());
 
       notification.success({
         message: 'Login Successful',
