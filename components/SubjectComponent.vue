@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {createVNode, h} from 'vue';
 import {
-  AButton, ATooltip,
+  AButton,
+  ATooltip,
   DeleteOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
@@ -14,17 +15,14 @@ import {handleInAuthorizedError} from "~/composables/CustomError";
 import type {Paginate} from "~/composables/apiResponse.interface";
 import type {FormInstance} from "ant-design-vue";
 import {STCodeList, type TStatus} from "~/composables/Status.interface";
-import type {FormUnit, IUnit} from "~/composables/settings/Unit/Unit.interface";
-import {deleteUnitService, getAllUnit, insertOrUpdateUnit} from "~/composables/settings/Unit/unit.service";
+import type {FormSubject, ISubject} from "~/composables/Subject/Subject.interface";
 import {translations} from "~/composables/translations";
+import {deleteSubjectService, getAllSubject, insertOrUpdateSubject} from "~/composables/Subject/subject.service";
 
 
 interface Props {
-    activePage: TStatus;
-  }
-
-
-  const props = defineProps<Props>();
+      activePage: TStatus;
+    }
 
   //This is a global state for language of the app
   const language = useLanguage();
@@ -34,19 +32,21 @@ interface Props {
   const pageSize = ref<number>(10);
   const currentPage = ref<number>(1);
   const totalPage = ref<number>(0);
-  const data = ref<IUnit[]>([]);
+  const data = ref<ISubject[]>([]);
   const isOpenModal = ref<boolean>(false);
   const isEdit = ref<boolean>(false);
   const isView = ref<boolean>(false);
   const formRef = ref<FormInstance>();
-  const unitId = ref<string>('');
-  const formState = reactive<FormUnit>({designation: ''});
+  const subjectId = ref<string>('');
+  const formState = reactive<FormSubject>({designation: ''});
+
+  const props = defineProps<Props>();
 
   const activeActionsColumns = {
     title: 'Actions',
     key: 'actions',
-    width: 200,
-    customRender: ({ record }: { record: IUnit }) => h('div', [
+    width: 150,
+    customRender: ({ record }: { record: ISubject }) => h('div', [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -76,8 +76,8 @@ interface Props {
   const deletedActionColumns = {
     title: 'Actions',
     key: 'actions',
-    width: 200,
-    customRender: ({ record }: { record: IUnit }) => h('div', [
+    width: 90,
+    customRender: ({ record }: { record: ISubject }) => h('div', [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -89,7 +89,7 @@ interface Props {
     ])
   };
 
-  const columns = computed(() =>[
+  const columns = computed(() => [
     {
       title: translations[language.value].designation,
       dataIndex: 'designation',
@@ -98,7 +98,7 @@ interface Props {
     {
       title: h('div', { style: { textAlign: 'center' } }, [translations[language.value].status]),
       key: 'status',
-      customRender: ({ record }: { record: IUnit}) => h('div', [
+      customRender: ({ record }: { record: ISubject}) => h('div', [
         record.status.code === STCodeList.ACTIVE ?
             h('div',
                 {
@@ -148,27 +148,27 @@ interface Props {
 
 
   //************Beginning of actions datatable button method**********
-  const handleView = (record: IUnit) => {
+  const handleView = (record: ISubject) => {
     resetForm();
     formState.designation = record.designation;
 
     handleShowModal(false, true);
   };
 
-  const handleEdit = (record: IUnit) => {
+  const handleEdit = (record: ISubject) => {
     resetForm();
     formState.designation = record.designation;
 
     if (record.uuid != null) {
-      unitId.value = record.uuid;
+      subjectId.value = record.uuid;
     }
 
     handleShowModal(true, false);
   };
 
-  const handleDelete = (record: IUnit) => {
+  const handleDelete = (record: ISubject) => {
     if (record.uuid != null) {
-      unitId.value = record.uuid;
+      subjectId.value = record.uuid;
     }
 
     Modal.confirm({
@@ -179,7 +179,7 @@ interface Props {
       cancelText: translations[language.value].no,
       onOk: async () => {
         loadingBtn.value = true;
-        await deleteUnit();
+        await deleteSubject();
       }
     });
   };
@@ -197,21 +197,19 @@ interface Props {
         loadingBtn.value = true;
 
         if (isEdit.value) {
-          await updateUnit();
+          await updateSubject();
         } else {
-          await insertUnit();
+          await insertSubject();
         }
       }
     });
   };
 
   //******************Beginning of CRUD controller**************
-  const insertUnit = async () => {
-    const dataForm: FormUnit = formState;
-
+  const insertSubject = async () => {
     try {
       //the params userId is null here because we are in the insert method
-      await insertOrUpdateUnit(dataForm, null, 'POST');
+      await insertOrUpdateSubject(formState, null, 'POST');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -224,7 +222,7 @@ interface Props {
       });
 
       //reload data
-      await getAllDataUnit();
+      await getAllDataSubject();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -244,14 +242,14 @@ interface Props {
     }
   }
 
-  const updateUnit = async () => {
-    const dataForm: FormUnit = {
+  const updateSubject = async () => {
+    const dataForm: FormSubject = {
       designation: formState.designation,
     };
 
     try {
       //Call operation API in service
-      await insertOrUpdateUnit(dataForm, unitId.value, 'PATCH');
+      await insertOrUpdateSubject(dataForm, subjectId.value, 'PATCH');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -263,7 +261,7 @@ interface Props {
       });
 
       //reload data
-      await getAllDataUnit();
+      await getAllDataSubject();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -283,11 +281,11 @@ interface Props {
     }
   }
 
-  const deleteUnit = async () => {
+  const deleteSubject = async () => {
 
     try {
       //Call operation API in service
-      await deleteUnitService(unitId.value);
+      await deleteSubjectService(subjectId.value);
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -299,7 +297,7 @@ interface Props {
       });
 
       //reload data
-      await getAllDataUnit();
+      await getAllDataSubject();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -319,10 +317,10 @@ interface Props {
     }
   }
 
-  const getAllDataUnit = async () => {
+  const getAllDataSubject = async () => {
     try {
       loading.value = true;
-      const response: Paginate<IUnit[]> = await getAllUnit(
+      const response: Paginate<ISubject[]> = await getAllSubject(
           keyword.value,
           pageSize.value,
           currentPage.value,
@@ -342,7 +340,7 @@ interface Props {
 
       // Show error notification
       notification.error({
-        message: 'Error',
+        message: translations[language.value].error,
         description: (error as Error).message,
         class: 'custom-error-notification'
       });
@@ -352,24 +350,24 @@ interface Props {
 
   //******************Beginning of filter and paginator methods****
   const handleClickPaginator = () => {
-    getAllDataUnit();
+    getAllDataSubject();
   };
 
   const handleChangePageSize = (value: SelectValue) => {
     pageSize.value = Number(value);
     currentPage.value = 1;
-    getAllDataUnit();
+    getAllDataSubject();
   };
 
   const handleSearch = () => {
     currentPage.value = 1;
-    getAllDataUnit();
+    getAllDataSubject();
   }
   //******************End filter of and paginator methods****
 
 
   onMounted(() => {
-    getAllDataUnit();
+    getAllDataSubject();
   })
 </script>
 
@@ -406,7 +404,7 @@ interface Props {
             :columns="columns"
             :data-source="data"
             :pagination="false"
-            :scroll="{ x: 1000, y: 1000 }"
+            :scroll="{ x: 1000, y: 480 }"
             bordered
         />
       </a-spin>
@@ -425,11 +423,12 @@ interface Props {
           :showSizeChanger="false" />
     </a-col>
   </a-row>
+  <!--Subject modal-->
   <a-modal
       v-model:open="isOpenModal"
       closable
       :footer="null"
-      :title="translations[language].unit"
+      title="Matière"
       style="top: 20px"
       @ok=""
   >

@@ -29,7 +29,7 @@ import {logoutUser, testTokenUser} from "~/composables/Auth/auth.service";
 import {getUserMenuService} from "~/composables/menu/menu.service";
 import type {NoPaginateData} from "~/composables/apiResponse.interface";
 import type {IUserMenu, Menu} from "~/composables/menu/menu.interface";
-import {insertOrUpdateUser} from "~/composables/settings/User/user.service";
+import {insertOrUpdateUser} from "~/composables/User/user.service";
 import {handleInAuthorizedError} from "~/composables/CustomError";
 
   // State
@@ -62,7 +62,7 @@ const MenuItems = computed(() => {
   return dynamicMenus.value.map((menu, index) => {
     const IconComponent = iconMap[menu.code] || BarChartOutlined; // fallback
     return {
-      key: `dyn-${index + 2}`,
+      key: menu.code,
       icon: () => h(IconComponent),
       label: menu.designation,
       title: menu.designation,
@@ -85,8 +85,26 @@ const MenuItems = computed(() => {
         state.selectedKeys = ['0'];
         break;
       case RouteList.DASHBOARD:
-        state.selectedKeys = ['1'];
+        state.selectedKeys = ['Dashboard'];
         break;
+      case RouteList.USER:
+      state.selectedKeys = ['User'];
+      break;
+      case RouteList.STUDENT:
+      state.selectedKeys = ['Student'];
+      break;
+      case RouteList.SUBJECT:
+      state.selectedKeys = ['Subject'];
+      break;
+      case RouteList.SCHOOL_YEAR:
+      state.selectedKeys = ['SchoolYear'];
+      break;
+      case RouteList.LEVEL:
+      state.selectedKeys = ['Level'];
+      break;
+      case RouteList.PRIVILEGE:
+      state.selectedKeys = ['Privilege'];
+      break;
       default:
         state.selectedKeys = ['0'];
         break;
@@ -272,7 +290,7 @@ const MenuItems = computed(() => {
         </Suspense>
       </a-layout-content>
       <a-layout-footer style="text-align: center">
-        Ny Aina Fitiavana FITAHIANTSOA ©2024
+        Ny Aina Fitiavana FITAHIANTSOA ©2025
       </a-layout-footer>
     </a-layout>
   </a-layout>

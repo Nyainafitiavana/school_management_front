@@ -1,21 +1,19 @@
+import type {IUser} from "~/composables/User/User.interface";
 import {CustomError} from "~/composables/CustomError";
-import type {ExecuteResponse, Paginate} from "~/composables/apiResponse.interface";
+import type {Paginate} from "~/composables/apiResponse.interface";
 import type {TStatus} from "~/composables/Status.interface";
 import {getAccessToken} from "~/composables/api";
-import type {FormExpenses, IExpenses} from "~/composables/Expenses/Expenses.interface";
 import {EnvApiConfig} from "~/composables/Env.config";
 
 const BASE_URL_API: string = `${EnvApiConfig.host}:${EnvApiConfig.port}`;
 
-export const getAllExpensesService = async (
-    pageSize: number | string,
-    currentPage: number | string,
-    expensesTypeId: string,
-    startDate: string,
-    endDate: string,
-    status: TStatus
-): Promise<Paginate<IExpenses[]>> => {
-    const response: any = await fetch(`${BASE_URL_API}${API.EXPENSES}?limit=${pageSize}&page=${currentPage}&expenseTypeId=${expensesTypeId}&startDate=${startDate}&endDate=${endDate}&status=${status}`, {
+export const getAllUser = async (
+    keyword: string,
+    pageSize: number,
+    currentPage: number,
+    status: TStatus,
+): Promise<Paginate<IUser[]>> => {
+    const response: any = await fetch(`${BASE_URL_API}${API.USER}?limit=${pageSize}&page=${currentPage}&value=${keyword}&status=${status}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -31,8 +29,25 @@ export const getAllExpensesService = async (
     return await response.json();
 };
 
-export const insertOrUpdateExpenses = async (data: FormExpenses, id: string | null, method: string): Promise<ExecuteResponse> => {
-    const path: string = id ? `${BASE_URL_API}${API.EXPENSES}/${id}` : `${BASE_URL_API}${API.EXPENSES}`;
+export const getOneUser = async (id: string): Promise<IUser> => {
+    const response: any = await fetch(`${BASE_URL_API}${API.USER}/${id}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAccessToken()}`
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new CustomError(errorData.message, response.status);
+    }
+
+    return await response.json();
+};
+
+export const insertOrUpdateUser = async (data: IUser, id: string | null, method: string): Promise<IUser> => {
+    const path: string = id ? `${BASE_URL_API}${API.USER}/${id}` : `${BASE_URL_API}${API.USER}`;
 
     const response: any = await fetch(path, {
         method: method,
@@ -51,8 +66,8 @@ export const insertOrUpdateExpenses = async (data: FormExpenses, id: string | nu
     return await response.json();
 };
 
-export const deleteExpensesService = async (id: string | null): Promise<ExecuteResponse> => {
-    const path: string = `${BASE_URL_API}${API.EXPENSES}/${id}`;
+export const deleteUserService = async (id: string | null): Promise<IUser> => {
+    const path: string = `${BASE_URL_API}${API.USER}/${id}`;
 
     const response: any = await fetch(path, {
         method: 'DELETE',

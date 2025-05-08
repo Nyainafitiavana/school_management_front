@@ -1,35 +1,29 @@
 <script setup lang="ts">
-
-  import CategoryComponent from "~/components/settings/CategoryComponent.vue";
-
   definePageMeta({
     layout: 'navbar',
-    title: 'Category',
-    middleware: ['user-middleware', 'admin-middleware']
+    title: 'Gestion des matièrs',
+    middleware: ['user-middleware']
   });
-
-  //This is a global state for language of the app
-  const language = useLanguage();
   const activeKey = ref('1');
 </script>
 
 <template>
-  <Title>{{translations[language].category}}</Title>
+  <Title>Gestion des matièrs</Title>
   <ATypographyTitle class="flex" style="font-size: 20px;">
-    <AppstoreOutlined/>&nbsp;
-    <span>{{translations[language].category}}</span>
+    <BookOutlined/>&nbsp;
+    <span>Gestion des matièrs</span>
   </ATypographyTitle>
   <a-tabs v-model:activeKey="activeKey" centered>
     <a-tab-pane key="1" @click="() => activeKey = '1'">
       <template #tab>
         <span>
           <check-circle-filled />
-          {{translations[language].active}}
+          Actif
         </span>
       </template>
       <Suspense>
         <template #default>
-          <CategoryComponent v-if="activeKey === '1'"  :active-page="'ACT'"/>
+          <SubjectComponent v-if="activeKey === '1'"  :active-page="'ACT'"/>
         </template>
       </Suspense>
     </a-tab-pane>
@@ -37,12 +31,12 @@
       <template #tab>
         <span>
           <delete-outlined/>
-          {{translations[language].deleted}}
+          Supprimé
         </span>
       </template>
       <Suspense>
         <template #default>
-          <CategoryComponent v-if="activeKey === '2'" :active-page="'DLT'"/>
+          <SubjectComponent v-if="activeKey === '2'" :active-page="'DLT'"/>
         </template>
       </Suspense>
     </a-tab-pane>

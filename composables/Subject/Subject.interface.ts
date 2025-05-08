@@ -1,11 +1,11 @@
 import type {IStatus} from "~/composables/Status.interface";
 
-export interface IUnit {
+export interface ISubject {
     uuid: string;
     designation: string;
     status: IStatus;
 }
 
-export interface FormUnit {
+export interface FormSubject {
     designation: string;
 }

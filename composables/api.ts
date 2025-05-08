@@ -3,6 +3,7 @@ export const API = {
     "LOGOUT" : "/api/auth/logout",
     "TEST_TOKEN" : "/api/auth/test-token",
     "USER" : "/api/users",
+    "SUBJECT" : "/api/subjects",
 }
 
 export const getAccessToken = (): string | null => {

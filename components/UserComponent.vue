@@ -1,27 +1,30 @@
 <script setup lang="ts">
-import {createVNode, h} from 'vue';
-import {
-  AButton, ATooltip,
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-  EyeOutlined,
-  FormOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from "#components";
-import type {SelectValue} from "ant-design-vue/es/select";
-import {handleInAuthorizedError} from "~/composables/CustomError";
-import type {Paginate} from "~/composables/apiResponse.interface";
-import type {FormInstance} from "ant-design-vue";
-import {STCodeList, type TStatus} from "~/composables/Status.interface";
-import type {FormCategory, ICategory} from "~/composables/settings/Category/Category.interface";
-import {deleteCategoryService, getAllCategory, insertOrUpdateCategory} from "~/composables/settings/Category/category.service";
-import {translations} from "~/composables/translations";
+  import {createVNode, h} from 'vue';
+  import {
+    AButton, ATooltip,
+    DeleteOutlined,
+    ExclamationCircleOutlined,
+    EyeOutlined,
+    FormOutlined,
+    PlusOutlined,
+    SearchOutlined, TeamOutlined, UserOutlined
+  } from "#components";
+  import type {FormStateUser, IUser} from "~/composables/User/User.interface";
+  import type {SelectValue} from "ant-design-vue/es/select";
+  import {handleInAuthorizedError} from "~/composables/CustomError";
+  import {deleteUserService, getAllUser, insertOrUpdateUser} from "~/composables/User/user.service";
+  import type {Paginate} from "~/composables/apiResponse.interface";
+  import type {FormInstance} from "ant-design-vue";
+  import {STCodeList, type TStatus} from "~/composables/Status.interface";
+  import {translations} from "~/composables/translations";
 
 
   interface Props {
-      activePage: TStatus;
-    }
+    activePage: TStatus;
+  }
+
+
+  const props = defineProps<Props>();
 
   //This is a global state for language of the app
   const language = useLanguage();
@@ -31,21 +34,27 @@ import {translations} from "~/composables/translations";
   const pageSize = ref<number>(10);
   const currentPage = ref<number>(1);
   const totalPage = ref<number>(0);
-  const data = ref<ICategory[]>([]);
+  const data = ref<IUser[]>([]);
   const isOpenModal = ref<boolean>(false);
   const isEdit = ref<boolean>(false);
   const isView = ref<boolean>(false);
   const formRef = ref<FormInstance>();
-  const categoryId = ref<string>('');
-  const formState = reactive<FormCategory>({designation: ''});
-
-  const props = defineProps<Props>();
+  const userId = ref<string>('');
+  const formState = reactive<FormStateUser>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    isAdmin: false
+  });
 
   const activeActionsColumns = {
     title: 'Actions',
     key: 'actions',
     width: 150,
-    customRender: ({ record }: { record: ICategory }) => h('div', [
+    customRender: ({ record }: { record: IUser }) => h('div', [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -73,10 +82,10 @@ import {translations} from "~/composables/translations";
   };
 
   const deletedActionColumns = {
-    title: 'Actions',
+    title: 'Action',
     key: 'actions',
     width: 90,
-    customRender: ({ record }: { record: ICategory }) => h('div', [
+    customRender: ({ record }: { record: IUser }) => h('div', [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -88,17 +97,85 @@ import {translations} from "~/composables/translations";
     ])
   };
 
-  const columns = computed(() => [
+  const columns = computed(() =>[
     {
-      title: translations[language.value].designation,
-      dataIndex: 'designation',
-      key: 'designation',
+      title: translations[language.value].lastName,
+      dataIndex: 'lastName',
+      key: 'lastName',
+    },
+    {
+      title: translations[language.value].firstName,
+      dataIndex: 'firstName',
+      key: 'firstName',
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+    },
+    {
+      title: translations[language.value].phoneNumber,
+      dataIndex: 'phone',
+      key: 'phone',
+      customRender: ({ text }: { text: string }) => text ? text : '---'
+    },
+    {
+      title: translations[language.value].role,
+      dataIndex: 'isAdmin',
+      key: 'isAdmin',
+      width: 150,
+      customRender: ({ text }: { text: boolean }) => text ?
+          h(
+              'div',
+              { class : 'flex' },
+              [
+                h(
+                    'div',
+                    {
+                      class : 'success-color',
+                      style: 'font-size: 20px;'
+                    },
+                    [h(UserOutlined)]
+                ),
+                h(
+                    'div',
+                    {
+                      class : 'success-secondary mt-3 ml-1',
+                      style: 'font-size: 15px;'
+                    },
+                    [translations[language.value].admin]
+                )
+              ]
+          ) :
+          h(
+              'div',
+              { class : 'flex' },
+              [
+                h(
+                    'div',
+                    {
+                      class : 'warning-color',
+                      style: 'font-size: 20px;'
+                    },
+                    [h(TeamOutlined)]
+                ),
+                h(
+                    'div',
+                    {
+                      class : 'success-secondary mt-3 ml-1',
+                      style: 'font-size: 15px;'
+                    },
+                    [translations[language.value].manager]
+                )
+              ]
+          )
     },
     {
       title: h('div', { style: { textAlign: 'center' } }, [translations[language.value].status]),
       key: 'status',
-      customRender: ({ record }: { record: ICategory}) => h('div', [
-        record.status.code === STCodeList.ACTIVE ?
+      width: 120,
+      customRender: ({ record }: { record: IUser}) => h('div', [
+        record.status && (record.status.code === STCodeList.ACTIVE) ?
             h('div',
                 {
                   style: { textAlign: 'center', color: 'white', borderRadius: '10px' },
@@ -136,38 +213,60 @@ import {translations} from "~/composables/translations";
     resetForm();
     isOpenModal.value = false;
   }
+
+  const validateConfirmPassword = (rule, value) => {
+    if (value !== formState.password) {
+      return Promise.reject(translations[language.value].errorPasswordDontMatch);
+    } else {
+      return Promise.resolve();
+    }
+  }
   //************End of modal actions*********************
 
   //************Add user button action*********
-  const handleAddCategory = () => {
+  const handleAddUser = () => {
     resetForm();
-    formState.designation = '';
+    formState.firstName = '';
+    formState.lastName = '';
+    formState.email = '';
+    formState.phone = '';
+    formState.password = '';
+    formState.confirmPassword = '';
+    formState.isAdmin = false;
     handleShowModal(false, false);
   }
 
 
   //************Beginning of actions datatable button method**********
-  const handleView = (record: ICategory) => {
+  const handleView = (record: IUser) => {
     resetForm();
-    formState.designation = record.designation;
+    formState.firstName = record.firstName;
+    formState.lastName = record.lastName;
+    formState.email = record.email;
+    formState.phone = record.phone;
+    formState.isAdmin = record.isAdmin;
 
     handleShowModal(false, true);
   };
 
-  const handleEdit = (record: ICategory) => {
+  const handleEdit = (record: IUser) => {
     resetForm();
-    formState.designation = record.designation;
+    formState.firstName = record.firstName;
+    formState.lastName = record.lastName;
+    formState.email = record.email;
+    formState.phone = record.phone;
+    formState.isAdmin = record.isAdmin;
 
     if (record.uuid != null) {
-      categoryId.value = record.uuid;
+      userId.value = record.uuid;
     }
 
     handleShowModal(true, false);
   };
 
-  const handleDelete = (record: ICategory) => {
+  const handleDelete = (record: IUser) => {
     if (record.uuid != null) {
-      categoryId.value = record.uuid;
+      userId.value = record.uuid;
     }
 
     Modal.confirm({
@@ -178,7 +277,7 @@ import {translations} from "~/composables/translations";
       cancelText: translations[language.value].no,
       onOk: async () => {
         loadingBtn.value = true;
-        await deleteCategory();
+        await deleteUser();
       }
     });
   };
@@ -196,21 +295,22 @@ import {translations} from "~/composables/translations";
         loadingBtn.value = true;
 
         if (isEdit.value) {
-          await updateCategory();
+          await updateUser();
         } else {
-          await insertCategory();
+          await insertUser();
         }
       }
     });
   };
 
   //******************Beginning of CRUD controller**************
-  const insertCategory = async () => {
-    const dataForm: FormCategory = formState;
+  const insertUser = async () => {
+    const dataForm: FormStateUser = formState;
+    delete dataForm.confirmPassword;
 
     try {
       //the params userId is null here because we are in the insert method
-      await insertOrUpdateCategory(dataForm, null, 'POST');
+      await insertOrUpdateUser(dataForm, null, 'POST');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -223,7 +323,7 @@ import {translations} from "~/composables/translations";
       });
 
       //reload data
-      await getAllDataCategory();
+      await getAllDataUser();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -243,14 +343,19 @@ import {translations} from "~/composables/translations";
     }
   }
 
-  const updateCategory = async () => {
-    const dataForm: FormCategory = {
-      designation: formState.designation,
+  const updateUser = async () => {
+    const values: FormStateUser = formState;
+    const dataForm: IUser = {
+      email: values.email,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      phone: values.phone,
+      isAdmin: values.isAdmin,
     };
 
     try {
       //Call operation API in service
-      await insertOrUpdateCategory(dataForm, categoryId.value, 'PATCH');
+      await insertOrUpdateUser(dataForm, userId.value, 'PATCH');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -262,7 +367,7 @@ import {translations} from "~/composables/translations";
       });
 
       //reload data
-      await getAllDataCategory();
+      await getAllDataUser();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -282,11 +387,11 @@ import {translations} from "~/composables/translations";
     }
   }
 
-  const deleteCategory = async () => {
+  const deleteUser = async () => {
 
     try {
       //Call operation API in service
-      await deleteCategoryService(categoryId.value);
+      await deleteUserService(userId.value);
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -298,7 +403,7 @@ import {translations} from "~/composables/translations";
       });
 
       //reload data
-      await getAllDataCategory();
+      await getAllDataUser();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -318,10 +423,10 @@ import {translations} from "~/composables/translations";
     }
   }
 
-  const getAllDataCategory = async () => {
+  const getAllDataUser = async () => {
     try {
       loading.value = true;
-      const response: Paginate<ICategory[]> = await getAllCategory(
+      const response: Paginate<IUser[]> = await getAllUser(
           keyword.value,
           pageSize.value,
           currentPage.value,
@@ -341,7 +446,7 @@ import {translations} from "~/composables/translations";
 
       // Show error notification
       notification.error({
-        message: translations[language.value].error,
+        message: 'Error',
         description: (error as Error).message,
         class: 'custom-error-notification'
       });
@@ -351,24 +456,24 @@ import {translations} from "~/composables/translations";
 
   //******************Beginning of filter and paginator methods****
   const handleClickPaginator = () => {
-    getAllDataCategory();
+    getAllDataUser();
   };
 
   const handleChangePageSize = (value: SelectValue) => {
     pageSize.value = Number(value);
     currentPage.value = 1;
-    getAllDataCategory();
+    getAllDataUser();
   };
 
   const handleSearch = () => {
     currentPage.value = 1;
-    getAllDataCategory();
+    getAllDataUser();
   }
   //******************End filter of and paginator methods****
 
 
   onMounted(() => {
-    getAllDataCategory();
+    getAllDataUser();
   })
 </script>
 
@@ -389,7 +494,7 @@ import {translations} from "~/composables/translations";
       <span> / page</span>
     </a-col>
     <a-col class="mt-8" span="7">
-      <a-button :icon="h(PlusOutlined)" @click="handleAddCategory" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success ml-5">{{translations[language].add}}</a-button>
+      <a-button :icon="h(PlusOutlined)" @click="handleAddUser" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success ml-5">{{translations[language].add}}</a-button>
     </a-col>
     <a-col class="mt-8 flex justify-end" span="12">
       <a-input type="text" class="w-56 h-9" v-model:value="keyword" />&nbsp;
@@ -424,14 +529,15 @@ import {translations} from "~/composables/translations";
           :showSizeChanger="false" />
     </a-col>
   </a-row>
-  <!--Category modal-->
+  <!--Modal user-->
   <a-modal
       v-model:open="isOpenModal"
       closable
       :footer="null"
-      :title="translations[language].category"
+      :title="translations[language].user"
       style="top: 20px"
       @ok=""
+      width="1000px"
   >
     <a-row class="w-full">
       <a-col class="w-full">
@@ -444,15 +550,100 @@ import {translations} from "~/composables/translations";
             @finish="onSubmitForm"
         >
           <a-form-item
-              name="designation"
-              type="text"
-              :rules="[{ required: true, message: translations[language].errorDesignation }]"
+              name="email"
+              type="email"
+              :rules="[{ required: true, type: 'email', message: translations[language].errorEmail }]"
               class="w-full mt-10"
           >
             <a-row>
-              <a-col span="5"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
+              <a-col span="5"><label for="basic_email"><span class="required_toil">*</span> Email:</label></a-col>
               <a-col span="19">
-                <a-input v-model:value="formState.designation" size="large" :placeholder="translations[language].designation" :disabled="isView"></a-input>
+                <a-input v-model:value="formState.email" size="middle" placeholder="Email" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="lastName"
+              type="text"
+              :rules="[{ required: true, message: translations[language].errorLastName }]"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_lastName"><span class="required_toil">*</span> {{translations[language].lastName}}:</label></a-col>
+              <a-col span="19">
+                <a-input v-model:value="formState.lastName" size="middle" :placeholder="translations[language].lastName" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="firstName"
+              type="text"
+              :rules="[{ required: true, message: translations[language].errorFirstName }]"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_firstName"><span class="required_toil">*</span> {{translations[language].firstName}}:</label></a-col>
+              <a-col span="19">
+                <a-input v-model:value="formState.firstName" size="middle" :placeholder="translations[language].firstName" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="phone"
+              type="text"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_phone">{{translations[language].phoneNumber}}: </label></a-col>
+              <a-col span="19">
+                <a-input v-model:value="formState.phone" size="middle" :placeholder="translations[language].phoneNumber" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="isAdmin"
+              type="text"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_isAdmin">{{translations[language].role}}:</label></a-col>
+              <a-col span="19">
+                <a-switch
+                    v-model:checked="formState.isAdmin"
+                    :checked-children="translations[language].admin"
+                    :un-checked-children="translations[language].manager"
+                    :disabled="isView"/>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="password"
+              type="text"
+              v-if="!isEdit && !isView"
+              :rules="[{ required: true, message: translations[language].errorPassword }]"
+              class="w-full mt-10 mb-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_password"><span class="required_toil">*</span> {{translations[language].password}}: </label></a-col>
+              <a-col span="19">
+                <a-input-password v-model:value="formState.password" size="middle" :placeholder="translations[language].password"/>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="confirmPassword"
+              type="text"
+              v-if="!isEdit && !isView"
+              :rules="[
+                  { required: true, message: translations[language].errorConfirmPassword },
+                  { validator: validateConfirmPassword }
+              ]"
+              class="w-full mt-10 mb-10"
+          >
+            <a-row>
+              <a-col span="5"><label for="basic_confirmPassword"><span class="required_toil">*</span> {{translations[language].confirmPassword}}: </label></a-col>
+              <a-col span="19">
+                <a-input-password v-model:value="formState.confirmPassword" size="middle" :placeholder="translations[language].confirmPasswordPlaceholder"/>
               </a-col>
             </a-row>
           </a-form-item>
