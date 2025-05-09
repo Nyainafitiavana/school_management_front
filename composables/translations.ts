@@ -218,7 +218,7 @@ export const translations: Translations = {
         manager: 'Gestionnaire',
         status: 'État',
         add: 'Ajouter',
-        save: 'sauvegarder',
+        save: 'Sauvegarder',
         cancel: 'Annuler',
         close: 'Fermer',
         designation: 'Désignation',

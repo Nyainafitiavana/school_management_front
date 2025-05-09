@@ -1,13 +1,13 @@
 import {CustomError} from "~/composables/CustomError";
 import type {Paginate} from "~/composables/apiResponse.interface";
 import type {TStatus} from "~/composables/Status.interface";
-import type {FormCategory, FormSubject, ICategory, ISubject} from "~/composables/Subject/Subject.interface";
+import type {FormSubject, ISubject} from "~/composables/Subject/Subject.interface";
 import {getAccessToken} from "~/composables/api";
 import {EnvApiConfig} from "~/composables/Env.config";
 
 const BASE_URL_API: string = `${EnvApiConfig.host}:${EnvApiConfig.port}`;
 
-export const getAllSubject = async (keyword: string, pageSize: number | string, currentPage: number | string, status: TStatus): Promise<Paginate<ICategory[]>> => {
+export const getAllSubject = async (keyword: string, pageSize: number | string, currentPage: number | string, status: TStatus): Promise<Paginate<ISubject[]>> => {
 
     const response: any = await fetch(`${BASE_URL_API}${API.SUBJECT}?limit=${pageSize}&page=${currentPage}&value=${keyword}&status=${status}`, {
         method: 'GET',

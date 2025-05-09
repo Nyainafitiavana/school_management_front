@@ -4,6 +4,7 @@ export const API = {
     "TEST_TOKEN" : "/api/auth/test-token",
     "USER" : "/api/users",
     "SUBJECT" : "/api/subjects",
+    "LEVEL" : "/api/level",
 }
 
 export const getAccessToken = (): string | null => {

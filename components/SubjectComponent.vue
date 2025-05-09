@@ -207,9 +207,12 @@ interface Props {
 
   //******************Beginning of CRUD controller**************
   const insertSubject = async () => {
+    const dataForm: FormSubject = {
+      designation: formState.designation,
+    };
     try {
       //the params userId is null here because we are in the insert method
-      await insertOrUpdateSubject(formState, null, 'POST');
+      await insertOrUpdateSubject(dataForm, null, 'POST');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
