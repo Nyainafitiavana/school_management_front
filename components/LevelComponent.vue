@@ -613,7 +613,7 @@
       formStateSubjectLevel.teacherId = null;
       formStateSubjectLevel.coefficient = null;
       //reload data
-      await getAllDataLevel();
+      await getAllDataSubjectLevel();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -1012,7 +1012,7 @@
                 <!--Filter datatable-->
                 <div v-if="activeKey === '2'">
                   <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                    <a-col class="mt-8" span="5">
+                    <a-col class="mt-5" span="12">
                       <a-select
                           ref="select"
                           v-model:value="pageSizeSubjectLevel"
@@ -1025,7 +1025,9 @@
                       </a-select>
                       <span> / page</span>
                     </a-col>
-                    <a-col class="mt-8 flex justify-end" span="12">
+                  </a-row>
+                  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+                    <a-col class="mt-5" span="12">
                       <a-input type="text" class="w-56 h-9" v-model:value="keywordSubjectLevel" />&nbsp;
                       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearchSubjectLevel"/>
                     </a-col>
