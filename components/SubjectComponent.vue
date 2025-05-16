@@ -376,8 +376,8 @@ interface Props {
 
 <template>
   <!--Filter datatable-->
-  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-    <a-col class="mt-8" span="5">
+  <a-row class="w-full pt-8 gap-4 grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3">
+    <a-col>
       <a-select
           ref="select"
           v-model:value="pageSize"
@@ -390,11 +390,11 @@ interface Props {
       </a-select>
       <span> / page</span>
     </a-col>
-    <a-col class="mt-8" span="7">
-      <a-button :icon="h(PlusOutlined)" @click="handleAdd" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success ml-5">{{translations[language].add}}</a-button>
+    <a-col>
+      <a-button :icon="h(PlusOutlined)" @click="handleAdd" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success">{{translations[language].add}}</a-button>
     </a-col>
-    <a-col class="mt-8 flex justify-end" span="12">
-      <a-input type="text" class="w-56 h-9" v-model:value="keyword" />&nbsp;
+    <a-col class="w-full flex justify-start md:justify-start lg:justify-end">
+      <a-input type="text" class="w-40 md:w-40 lg:w-64" v-model:value="keyword" />&nbsp;
       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearch"/>
     </a-col>
   </a-row>
@@ -449,11 +449,11 @@ interface Props {
               name="designation"
               type="text"
               :rules="[{ required: true, message: translations[language].errorDesignation }]"
-              class="w-full mt-10"
+              class="w-full mt-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
-              <a-col span="19">
+            <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
+              <a-col class="w-28"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
+              <a-col class="w-72">
                 <a-input v-model:value="formState.designation" size="large" :placeholder="translations[language].designation" :disabled="isView"></a-input>
               </a-col>
             </a-row>

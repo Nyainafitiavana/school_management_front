@@ -8,6 +8,6 @@ export const RouteList = {
     'STUDENT': '/etudiants',
     'SUBJECT': '/matiers',
     'SCHOOL_YEAR': '/annee_scolaires',
-    'LEVEL': '/classes',
+    'LEVEL': '/niveaux',
     'PRIVILEGE': '/privileges',
 };

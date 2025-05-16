@@ -107,3 +107,22 @@ export const getAllSubjectLevel = async (
 
     return await response.json();
 };
+
+export const deleteSubjectLevelService = async (id: string | null): Promise<ExecuteResponse> => {
+    const path: string = `${BASE_URL_API}${API.LEVEL}/subject/${id}`;
+
+    const response: any = await fetch(path, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAccessToken()}`
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new CustomError(errorData.message, response.status);
+    }
+
+    return await response.json();
+};

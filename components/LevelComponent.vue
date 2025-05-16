@@ -18,7 +18,7 @@
   import {translations} from "~/composables/translations";
   import type {FormLevel, FormSubjectLevel, ILevel, ISubjectLevel} from "~/composables/Level/level.interface";
   import {
-    deleteLevelService,
+    deleteLevelService, deleteSubjectLevelService,
     getAllLevel, getAllSubjectLevel,
     insertOrUpdateLevel,
     insertOrUpdateSubjectLevel
@@ -166,46 +166,31 @@
     {
       title: h('div', { style: { textAlign: 'center' } }, ['Matière']),
       key: 'subject',
+      width: 150,
       customRender: ({ record }: { record: ISubjectLevel}) => h('div', [
-        h('div',
-            [`${record.subjects ? record.subjects.designation : ''}`]
-        ),
+        `${record.subjects ? record.subjects.designation : ''}`
       ])
+    },
+    {
+      title: h('div', { style: { textAlign: 'center' } }, ['Coéfficient']),
+      key: 'coefficient',
+      width: 110,
+      customRender: ({ record }: { record: ISubjectLevel}) => h('div', { style: { textAlign: 'center' } }, [record.coefficient])
     },
     {
       title: h('div', { style: { textAlign: 'center' } }, ['Enseignant(e)']),
       key: 'teacher',
+      width: 200,
       customRender: ({ record }: { record: ISubjectLevel}) => h('div', [
         h('div',
             [`${record.users ? record.users.lastName : ''} ${record.users && record.users.firstName ? record.users.firstName : ''}`]
         ),
       ])
     },
-    {
-      title: h('div', { style: { textAlign: 'center' } }, [translations[language.value].status]),
-      key: 'status',
-      customRender: ({ record }: { record: ISubjectLevel}) => h('div', [
-        record.status.code === STCodeList.ACTIVE ?
-            h('div',
-                {
-                  style: { textAlign: 'center', color: 'white', borderRadius: '10px' },
-                  class: 'primary-background-color'
-                },
-                [translations[language.value].active]
-            )
-            : h('div',
-                {
-                  style: { textAlign: 'center', color: 'white', borderRadius: '10px' },
-                  class: 'danger-background-color'
-                },
-                [translations[language.value].deleted]
-            ),
-      ])
-    },
     activeKey.value === '1' ? {
       title: 'Actions',
       key: 'actions',
-      width: 200,
+      width: 110,
       customRender: ({ record }: { record: ISubjectLevel }) => h('div', [
         h(ATooltip, { title: translations[language.value].update, color: 'blue' }, [
           h(AButton, {
@@ -262,6 +247,11 @@
     currentPageSubjectLevel.value = 1;
     keywordSubjectLevel.value = '';
     getAllDataSubjectLevel();
+  }
+
+  const handleCancelActionSubjectLevel = () => {
+    resetForm();
+    isEdit.value = false;
   }
   //************End of modal actions*********************
 
@@ -333,6 +323,24 @@
     isEdit.value = true;
     isView.value = false;
   };
+
+  const handleDeleteSubjectLevel = (record: ISubjectLevel) => {
+    if (record.uuid != null) {
+      subjectLevelId.value = record.uuid;
+    }
+
+    Modal.confirm({
+      title: translations[language.value].confirmationTitle,
+      icon: createVNode(ExclamationCircleOutlined),
+      content: translations[language.value].confirmationDescription,
+      okText: translations[language.value].yes,
+      cancelText: translations[language.value].no,
+      onOk: async () => {
+        loadingBtn.value = true;
+        await deleteSubjectLevel();
+      }
+    });
+  };
   //************End of actions datatable button method**********
 
   //*******Global method on submit form********************
@@ -366,7 +374,7 @@
         loadingBtn.value = true;
 
         if (isEdit.value) {
-          await updateLevel();
+          await updateSubjectLevel();
         } else {
           await insertSubjectLevel();
         }
@@ -633,6 +641,49 @@
     }
   }
 
+  const updateSubjectLevel = async () => {
+    const dataForm: FormSubjectLevel = {
+      levelId: levelId.value,
+      subjectId: formStateSubjectLevel.subjectId,
+      teacherId: formStateSubjectLevel.teacherId,
+      coefficient: formStateSubjectLevel.coefficient,
+    };
+
+    try {
+      //Call operation API in service
+      await insertOrUpdateSubjectLevel(dataForm, subjectLevelId.value, 'PATCH');
+      //turn off of loading button and close modal
+      loadingBtn.value = false;
+      resetForm();
+      isEdit.value = false;
+      // Show success notification
+      notification.success({
+        message: translations[language.value].success,
+        description: translations[language.value].successDescription,
+        class: 'custom-success-notification'
+      });
+
+      //reload data
+      await getAllDataSubjectLevel();
+    } catch (error) {
+      //Verification code status if equal 401 then we redirect to log in
+      if (error instanceof CustomError) {
+        if (error.status === 401) {
+          //call the global handle action if in authorized
+          handleInAuthorizedError(error);
+          return;
+        }
+      }
+
+      // Show error notification
+      notification.error({
+        message: translations[language.value].error,
+        description: (error as Error).message,
+        class: 'custom-error-notification'
+      });
+    }
+  }
+
   const getAllDataSubjectLevel = async () => {
     try {
       loadingSubjectLevel.value = true;
@@ -646,6 +697,42 @@
       dataSubjectLevel.value = response.data;
       totalPageSubjectLevel.value = response.totalRows;
       loadingSubjectLevel.value = false;
+    } catch (error) {
+      //Verification code status if equal 401 then we redirect to log in
+      if (error instanceof CustomError) {
+        if (error.status === 401) {
+          //call the global handle action if in authorized
+          handleInAuthorizedError(error);
+          return;
+        }
+      }
+
+      // Show error notification
+      notification.error({
+        message: translations[language.value].error,
+        description: (error as Error).message,
+        class: 'custom-error-notification'
+      });
+    }
+  }
+
+  const deleteSubjectLevel = async () => {
+
+    try {
+      //Call operation API in service
+      await deleteSubjectLevelService(subjectLevelId.value);
+      //turn off of loading button and close modal
+      loadingBtn.value = false;
+      isOpenModal.value = false;
+      // Show success notification
+      notification.success({
+        message: translations[language.value].success,
+        description: translations[language.value].successDescription,
+        class: 'custom-success-notification'
+      });
+
+      //reload data
+      await getAllDataSubjectLevel();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -716,8 +803,8 @@
 
 <template>
   <!--Filter datatable-->
-  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-    <a-col class="mt-8" span="5">
+  <a-row class="w-full pt-8 gap-4 grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3">
+    <a-col>
       <a-select
           ref="select"
           v-model:value="pageSize"
@@ -730,11 +817,11 @@
       </a-select>
       <span> / page</span>
     </a-col>
-    <a-col class="mt-8" span="7">
-      <a-button :icon="h(PlusOutlined)" @click="handleAdd" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success ml-5">{{translations[language].add}}</a-button>
+    <a-col>
+      <a-button :icon="h(PlusOutlined)" @click="handleAdd" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success">{{translations[language].add}}</a-button>
     </a-col>
-    <a-col class="mt-8 flex justify-end" span="12">
-      <a-input type="text" class="w-56 h-9" v-model:value="keyword" />&nbsp;
+    <a-col class="w-full flex justify-start md:justify-start lg:justify-end">
+      <a-input type="text" class="w-40 md:w-40 lg:w-64" v-model:value="keyword" />&nbsp;
       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearch"/>
     </a-col>
   </a-row>
@@ -792,9 +879,9 @@
               :rules="[{ required: true, message: translations[language].errorDesignation }]"
               class="w-full mt-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
-              <a-col span="19">
+            <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
+              <a-col class="w-48"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
+              <a-col class="w-64">
                 <a-input v-model:value="formState.designation" size="large" :placeholder="translations[language].designation" :disabled="isView"></a-input>
               </a-col>
             </a-row>
@@ -805,9 +892,9 @@
               :rules="[]"
               class="w-full mt-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_teacher">Enseignant(e) responsable:</label></a-col>
-              <a-col span="19">
+            <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
+              <a-col class="w-48"><label for="basic_teacher">Enseignant(e) responsable:</label></a-col>
+              <a-col class="w-64">
                 <a-select
                     v-model:value="formState.teacherInChargeId"
                     show-search
@@ -842,7 +929,7 @@
       title="Matièrs par niveaux"
       style="top: 20px"
       @ok=""
-      width="700px"
+      width="768px"
   >
     <a-row class="w-full">
       <a-col class="w-full">
@@ -860,9 +947,14 @@
               :rules="[{ required: true, message: 'Veuillez entrer selectionner une matière !' }]"
               class="w-10/12 m-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_subject"><span class="required_toil">*</span> Matière :</label></a-col>
-              <a-col span="19">
+            <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
+              <a-col class="w-24">
+                <label for="basic_subject">
+                  <span class="required_toil">*</span>
+                  Matière :
+                </label>
+              </a-col>
+              <a-col class="w-full md:w-96 lg:w-96">
                 <a-select
                     v-model:value="formStateSubjectLevel.subjectId"
                     show-search
@@ -879,9 +971,9 @@
               :rules="[]"
               class="w-10/12 m-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_teacher">Enseignant(e) :</label></a-col>
-              <a-col span="19">
+            <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
+              <a-col class="w-24"><label for="basic_teacher">Enseignant(e) :</label></a-col>
+              <a-col class="w-full md:w-96 lg:w-96">
                 <a-select
                     v-model:value="formStateSubjectLevel.teacherId"
                     show-search
@@ -909,9 +1001,14 @@
               ]"
               class="w-10/12 m-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_coefficient"><span class="required_toil">*</span> Coéfficient :</label></a-col>
-              <a-col span="19">
+            <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
+              <a-col class="w-24">
+                <label for="basic_coefficient">
+                  <span class="required_toil">*</span>
+                  Coéfficient :
+                </label>
+              </a-col>
+              <a-col class="w-full md:w-96 lg:w-96">
                 <a-input-number
                     v-model:value="formStateSubjectLevel.coefficient"
                     :min="10" :max="100"
@@ -922,8 +1019,9 @@
           </a-form-item>
           <a-row class="w-10/12 m-5">
             <a-form-item class="w-full flex justify-start">
+              <a-button class="btn btn--default" size="middle" @click="handleCancelActionSubjectLevel">{{translations[language].cancel}}</a-button>
               <a-button
-                  class="btn btn--primary"
+                  class="btn btn--primary ml-5"
                   html-type="submit"
                   :loading="loading"
               >{{translations[language].save}}</a-button>
@@ -946,8 +1044,8 @@
               <template #default>
                 <!--Filter datatable-->
                 <div v-if="activeKey === '1'">
-                  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                    <a-col class="mt-5" span="12">
+                  <a-row class="w-full pt-5 gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+                    <a-col>
                       <a-select
                           ref="select"
                           v-model:value="pageSizeSubjectLevel"
@@ -960,9 +1058,7 @@
                       </a-select>
                       <span> / page</span>
                     </a-col>
-                  </a-row>
-                  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                    <a-col class="mt-5" span="12">
+                    <a-col class="flex justify-start md:justify-end lg:justify-end">
                       <a-input type="text" class="w-56 h-9" v-model:value="keywordSubjectLevel" />&nbsp;
                       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearchSubjectLevel"/>
                     </a-col>
@@ -1011,8 +1107,8 @@
               <template #default>
                 <!--Filter datatable-->
                 <div v-if="activeKey === '2'">
-                  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                    <a-col class="mt-5" span="12">
+                  <a-row class="w-full pt-5 gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+                    <a-col>
                       <a-select
                           ref="select"
                           v-model:value="pageSizeSubjectLevel"
@@ -1025,9 +1121,7 @@
                       </a-select>
                       <span> / page</span>
                     </a-col>
-                  </a-row>
-                  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-                    <a-col class="mt-5" span="12">
+                    <a-col class="flex justify-start md:justify-end lg:justify-end">
                       <a-input type="text" class="w-56 h-9" v-model:value="keywordSubjectLevel" />&nbsp;
                       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearchSubjectLevel"/>
                     </a-col>
