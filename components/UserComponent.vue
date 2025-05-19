@@ -47,7 +47,7 @@
     address: null,
     phoneNumber1: null,
     phoneNumber2: null,
-    isFullTime: null,
+    isFullTime: false,
     netSalaryPerMonth: null,
     netSalaryPerHour: null,
     monthlyWorkingHour: null,
@@ -186,6 +186,15 @@
   //************Add user button action*********
   const handleAddUser = () => {
     resetForm();
+    formState.firstName = null;
+    formState.lastName = null;
+    formState.email = null;
+    formState.phoneNumber1 = null;
+    formState.phoneNumber2 = null;
+    formState.isFullTime = true;
+    formState.netSalaryPerMonth = null;
+    formState.netSalaryPerHour = null;
+    formState.monthlyWorkingHour = null;
     handleShowModal(false, false);
   }
 
@@ -198,7 +207,7 @@
     formState.email = record.email;
     formState.phoneNumber1 = record.phoneNumber1;
     formState.phoneNumber2 = record.phoneNumber2;
-    formState.isFullTime = record.isFullTime;
+    formState.isFullTime = record.isFullTime ?? false;
     formState.netSalaryPerMonth = record.netSalaryPerMonth;
     formState.netSalaryPerHour = record.netSalaryPerHour;
     formState.monthlyWorkingHour = record.monthlyWorkingHour;
@@ -211,8 +220,12 @@
     formState.firstName = record.firstName;
     formState.lastName = record.lastName;
     formState.email = record.email;
-    formState.phone = record.phone;
-    formState.isAdmin = record.isAdmin;
+    formState.phoneNumber1 = record.phoneNumber1;
+    formState.phoneNumber2 = record.phoneNumber2;
+    formState.isFullTime = record.isFullTime ?? false;
+    formState.netSalaryPerMonth = record.netSalaryPerMonth;
+    formState.netSalaryPerHour = record.netSalaryPerHour;
+    formState.monthlyWorkingHour = record.monthlyWorkingHour;
 
     if (record.uuid != null) {
       userId.value = record.uuid;
@@ -263,7 +276,6 @@
   //******************Beginning of CRUD controller**************
   const insertUser = async () => {
     const dataForm: FormStateUser = formState;
-    delete dataForm.confirmPassword;
 
     try {
       //the params userId is null here because we are in the insert method
@@ -301,14 +313,7 @@
   }
 
   const updateUser = async () => {
-    const values: FormStateUser = formState;
-    const dataForm: IUser = {
-      email: values.email,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      phone: values.phone,
-      isAdmin: values.isAdmin,
-    };
+    const dataForm: FormStateUser = formState;
 
     try {
       //Call operation API in service
@@ -584,6 +589,85 @@
               </a-col>
             </a-row>
           </a-form-item>
+          <div class="w-full h-72 mt-5 border-2 border-b-gray-200 rounded-lg">
+            <a-typography-title :level="5" class="text-center mt-5">Paramètrage salariale</a-typography-title>
+            <hr>
+            <a-form-item
+                name="is_full_time"
+                type="text"
+                class="w-full m-5"
+            >
+              <a-row>
+                <a-col span="5">
+                  <label for="basic_is_full_time">
+                    Mode de travail:
+                  </label>
+                </a-col>
+                <a-col span="19">
+                  <a-switch v-model:checked="formState.isFullTime" checked-children="Plein temps" un-checked-children="Temps partiel" :disabled="isView"/>
+                </a-col>
+              </a-row>
+            </a-form-item>
+            <a-form-item
+                name="salary_month"
+                type="number"
+                class="w-full m-5"
+            >
+              <a-row>
+                <a-col span="5">
+                  <label for="basic_salary_month">Salaire mensuel net:</label>
+                </a-col>
+                <a-col span="19">
+                  <a-input-number
+                      v-model:value="formState.netSalaryPerMonth"
+                      :min="0"
+                      :disabled="isView || !formState.isFullTime"
+                      class="w-64"
+                  />
+                  <span class="ml-2">(Ariary)</span>
+                </a-col>
+              </a-row>
+            </a-form-item>
+            <a-form-item
+                name="salary_hour"
+                type="number"
+                class="w-full m-5"
+            >
+              <a-row>
+                <a-col span="5">
+                  <label for="basic_salary_hour">Salaire par heure net:</label>
+                </a-col>
+                <a-col span="19">
+                  <a-input-number
+                      v-model:value="formState.netSalaryPerHour"
+                      :min="0"
+                      :disabled="isView || formState.isFullTime"
+                      class="w-64"
+                  />
+                  <span class="ml-2">(Ariary)</span>
+                </a-col>
+              </a-row>
+            </a-form-item>
+            <a-form-item
+                name="salary_working_hour"
+                type="number"
+                class="w-full m-5"
+            >
+              <a-row>
+                <a-col span="5">
+                  <label for="basic_salary_working_hour">Temps de travail mensuel:</label>
+                </a-col>
+                <a-col span="19">
+                  <a-input-number
+                      v-model:value="formState.netSalaryPerHour"
+                      :min="0"
+                      :disabled="isView || formState.isFullTime"
+                  />
+                  <span class="ml-2">(Heure(s))</span>
+                </a-col>
+              </a-row>
+            </a-form-item>
+          </div>
           <a-row class="mt-10">
             <a-form-item class="w-full flex justify-start">
               <a-button class="btn btn--default" size="middle" @click="handleCloseModal">{{translations[language].cancel}}</a-button>
