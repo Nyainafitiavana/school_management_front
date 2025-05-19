@@ -179,8 +179,8 @@ const MenuItems = computed(() => {
       const menuMap = new Map<string, Menu>();
 
       userMenu.data.forEach((user: IUserMenu) => {
-        user.rules.MenuRules.forEach(menuRule => {
-          const { menu } = menuRule;
+        user.roles.MenuRoles.forEach(menuRole => {
+          const { menu } = menuRole;
           if (!menuMap.has(menu.uuid)) {
             menuMap.set(menu.uuid, menu);
           }

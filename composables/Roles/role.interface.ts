@@ -1,4 +1,4 @@
-export interface IRule {
+export interface IRole {
   uuid: string;
   designation: string;
 }

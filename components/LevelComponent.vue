@@ -876,7 +876,7 @@
           <a-form-item
               name="designation"
               type="text"
-              :rules="[{ required: true, message: translations[language].errorDesignation }]"
+              :roles="[{ required: true, message: translations[language].errorDesignation }]"
               class="w-full mt-5"
           >
             <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
@@ -889,7 +889,7 @@
           <a-form-item
               name="teacher"
               type="text"
-              :rules="[]"
+              :roles="[]"
               class="w-full mt-5"
           >
             <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
@@ -944,7 +944,7 @@
         >
           <a-form-item
               name="subjectId"
-              :rules="[{ required: true, message: 'Veuillez entrer selectionner une matière !' }]"
+              :roles="[{ required: true, message: 'Veuillez entrer selectionner une matière !' }]"
               class="w-10/12 m-5"
           >
             <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
@@ -968,7 +968,7 @@
           <a-form-item
               name="teacherId"
               type="text"
-              :rules="[]"
+              :roles="[]"
               class="w-10/12 m-5"
           >
             <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
@@ -987,7 +987,7 @@
           <a-form-item
               name="coefficient"
               type="number"
-              :rules="[
+              :roles="[
                 {
                   async validator(_rule, value) {
                     if (value === null) {

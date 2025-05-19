@@ -68,7 +68,7 @@
                     label=""
                     name="email"
                     type="email"
-                    :rules="[{ required: true, type: 'email', message: 'The input is not a valid email format!' }]"
+                    :roles="[{ required: true, type: 'email', message: 'The input is not a valid email format!' }]"
                     class="w-full mt-10"
                 >
                   <a-input v-model:value="formState.email" size="large" placeholder="E-mail">
@@ -80,7 +80,7 @@
                 <a-form-item
                     label=""
                     name="password"
-                    :rules="[{ required: true, message: 'Please input your password!' }]"
+                    :roles="[{ required: true, message: 'Please input your password!' }]"
                     class="w-full mt-5"
                     aria-placeholder="password"
                 >

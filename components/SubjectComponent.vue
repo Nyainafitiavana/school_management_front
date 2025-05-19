@@ -448,7 +448,7 @@ interface Props {
           <a-form-item
               name="designation"
               type="text"
-              :rules="[{ required: true, message: translations[language].errorDesignation }]"
+              :roles="[{ required: true, message: translations[language].errorDesignation }]"
               class="w-full mt-5"
           >
             <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">

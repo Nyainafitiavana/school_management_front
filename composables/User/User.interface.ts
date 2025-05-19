@@ -1,5 +1,5 @@
 import type {IStatus} from "~/composables/Status.interface";
-import type {IRule} from "~/composables/Rules/rule.interface";
+import type {IRole} from "~/composables/Roles/role.interface";
 
 export interface IUser {
     uuid: string;
@@ -9,23 +9,26 @@ export interface IUser {
     address: string;
     phoneNumber1: string;
     phoneNumber2: string;
-    isFullTime: string;
-    netSalaryPerMonth: string;
-    netSalaryPerHour: string;
-    monthlyWorkingHour: string;
-    UsersRules: IUsersRules[];
+    isFullTime: boolean;
+    netSalaryPerMonth: number;
+    netSalaryPerHour: number;
+    monthlyWorkingHour: number;
+    UsersRoles: IUsersRoles[];
     status: IStatus;
 }
 export interface FormStateUser {
     firstName: string;
     lastName: string;
     email: string;
-    phone: string;
-    isAdmin?: boolean;
-    password?: string;
-    confirmPassword?: string;
+    address: string;
+    phoneNumber1: string;
+    phoneNumber2: string;
+    isFullTime: boolean;
+    netSalaryPerMonth: number;
+    netSalaryPerHour: number;
+    monthlyWorkingHour: number;
 }
 
-export interface IUsersRules {
-    rules: IRule;
+export interface IUsersRoles {
+    roles: IRole;
 }

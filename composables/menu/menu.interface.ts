@@ -1,13 +1,13 @@
 export interface IUserMenu {
   uuid: string;
-  rules: {
+  roles: {
     uuid: string;
     designation: string;
-    MenuRules: IMenuRules[];
+    MenuRoles: IMenuRoles[];
   }
 }
 
-interface IMenuRules {
+interface IMenuRoles {
   menu: Menu
 }
 

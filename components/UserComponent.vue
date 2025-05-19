@@ -7,9 +7,9 @@
     EyeOutlined,
     FormOutlined,
     PlusOutlined,
-    SearchOutlined, TeamOutlined, UserOutlined
+    SearchOutlined,
   } from "#components";
-  import type {FormStateUser, IUser} from "~/composables/User/User.interface";
+  import type {FormStateUser, IUser, IUsersRoles} from "~/composables/User/User.interface";
   import type {SelectValue} from "ant-design-vue/es/select";
   import {handleInAuthorizedError} from "~/composables/CustomError";
   import {deleteUserService, getAllUser, insertOrUpdateUser} from "~/composables/User/user.service";
@@ -41,13 +41,16 @@
   const formRef = ref<FormInstance>();
   const userId = ref<string>('');
   const formState = reactive<FormStateUser>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    isAdmin: false
+    firstName: null,
+    lastName: null,
+    email: null,
+    address: null,
+    phoneNumber1: null,
+    phoneNumber2: null,
+    isFullTime: null,
+    netSalaryPerMonth: null,
+    netSalaryPerHour: null,
+    monthlyWorkingHour: null,
   });
 
   const activeActionsColumns = {
@@ -115,60 +118,25 @@
     },
     {
       title: translations[language.value].phoneNumber,
-      dataIndex: 'phone',
+      dataIndex: 'phoneNumber1',
       key: 'phone',
       customRender: ({ text }: { text: string }) => text ? text : '---'
     },
     {
-      title: translations[language.value].role,
-      dataIndex: 'isAdmin',
-      key: 'isAdmin',
-      width: 150,
-      customRender: ({ text }: { text: boolean }) => text ?
-          h(
-              'div',
-              { class : 'flex' },
-              [
-                h(
-                    'div',
-                    {
-                      class : 'success-color',
-                      style: 'font-size: 20px;'
-                    },
-                    [h(UserOutlined)]
-                ),
-                h(
-                    'div',
-                    {
-                      class : 'success-secondary mt-3 ml-1',
-                      style: 'font-size: 15px;'
-                    },
-                    [translations[language.value].admin]
-                )
-              ]
-          ) :
-          h(
-              'div',
-              { class : 'flex' },
-              [
-                h(
-                    'div',
-                    {
-                      class : 'warning-color',
-                      style: 'font-size: 20px;'
-                    },
-                    [h(TeamOutlined)]
-                ),
-                h(
-                    'div',
-                    {
-                      class : 'success-secondary mt-3 ml-1',
-                      style: 'font-size: 15px;'
-                    },
-                    [translations[language.value].manager]
-                )
-              ]
-          )
+      title: 'Rôles',
+      key: 'role',
+      customRender: ({ record }: { record: IUser }) => {
+        let roles = '';
+        record.UsersRoles.map((userRole: IUsersRoles) => {
+          if (roles) {
+            roles = roles + ', ' + userRole.roles.designation
+          } else {
+            roles = userRole.roles.designation
+          }
+
+        });
+        return roles;
+      }
     },
     {
       title: h('div', { style: { textAlign: 'center' } }, [translations[language.value].status]),
@@ -213,26 +181,11 @@
     resetForm();
     isOpenModal.value = false;
   }
-
-  const validateConfirmPassword = (rule, value) => {
-    if (value !== formState.password) {
-      return Promise.reject(translations[language.value].errorPasswordDontMatch);
-    } else {
-      return Promise.resolve();
-    }
-  }
   //************End of modal actions*********************
 
   //************Add user button action*********
   const handleAddUser = () => {
     resetForm();
-    formState.firstName = '';
-    formState.lastName = '';
-    formState.email = '';
-    formState.phone = '';
-    formState.password = '';
-    formState.confirmPassword = '';
-    formState.isAdmin = false;
     handleShowModal(false, false);
   }
 
@@ -243,8 +196,12 @@
     formState.firstName = record.firstName;
     formState.lastName = record.lastName;
     formState.email = record.email;
-    formState.phone = record.phone;
-    formState.isAdmin = record.isAdmin;
+    formState.phoneNumber1 = record.phoneNumber1;
+    formState.phoneNumber2 = record.phoneNumber2;
+    formState.isFullTime = record.isFullTime;
+    formState.netSalaryPerMonth = record.netSalaryPerMonth;
+    formState.netSalaryPerHour = record.netSalaryPerHour;
+    formState.monthlyWorkingHour = record.monthlyWorkingHour;
 
     handleShowModal(false, true);
   };
@@ -479,8 +436,8 @@
 
 <template>
   <!--Filter datatable-->
-  <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-    <a-col class="mt-8" span="5">
+  <a-row class="w-full pt-8 gap-4 grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3">
+    <a-col>
       <a-select
           ref="select"
           v-model:value="pageSize"
@@ -493,11 +450,11 @@
       </a-select>
       <span> / page</span>
     </a-col>
-    <a-col class="mt-8" span="7">
-      <a-button :icon="h(PlusOutlined)" @click="handleAddUser" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success ml-5">{{translations[language].add}}</a-button>
+    <a-col>
+      <a-button :icon="h(PlusOutlined)" @click="handleAddUser" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success">{{translations[language].add}}</a-button>
     </a-col>
-    <a-col class="mt-8 flex justify-end" span="12">
-      <a-input type="text" class="w-56 h-9" v-model:value="keyword" />&nbsp;
+    <a-col class="w-full flex justify-start md:justify-start lg:justify-end">
+      <a-input type="text" class="w-40 md:w-40 lg:w-64" v-model:value="keyword" />&nbsp;
       <a-button class="btn--primary" :icon="h(SearchOutlined)" @click="handleSearch"/>
     </a-col>
   </a-row>
@@ -550,22 +507,9 @@
             @finish="onSubmitForm"
         >
           <a-form-item
-              name="email"
-              type="email"
-              :rules="[{ required: true, type: 'email', message: translations[language].errorEmail }]"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5"><label for="basic_email"><span class="required_toil">*</span> Email:</label></a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.email" size="middle" placeholder="Email" :disabled="isView"></a-input>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
               name="lastName"
               type="text"
-              :rules="[{ required: true, message: translations[language].errorLastName }]"
+              :Roles="[{ required: true, message: translations[language].errorLastName }]"
               class="w-full mt-10"
           >
             <a-row>
@@ -578,7 +522,7 @@
           <a-form-item
               name="firstName"
               type="text"
-              :rules="[{ required: true, message: translations[language].errorFirstName }]"
+              :Roles="[{ required: true, message: translations[language].errorFirstName }]"
               class="w-full mt-10"
           >
             <a-row>
@@ -589,61 +533,54 @@
             </a-row>
           </a-form-item>
           <a-form-item
-              name="phone"
+              name="email"
+              type="email"
+              :Roles="[{ required: true, type: 'email', message: translations[language].errorEmail }]"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5">
+                <label for="basic_email">
+                  <span class="required_toil">*</span>
+                  Email:
+                </label>
+              </a-col>
+              <a-col span="19">
+                <a-input v-model:value="formState.email" size="middle" placeholder="Email" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="phone1"
+              type="text"
+              :Roles="[{ required: true, message: 'Veuillez entrer votre numero de téléphone principale' }]"
+              class="w-full mt-10"
+          >
+            <a-row>
+              <a-col span="5">
+                <label for="basic_phone1">
+                  <span class="required_toil">*</span>
+                  {{translations[language].phoneNumber}} 1:
+                </label>
+              </a-col>
+              <a-col span="19">
+                <a-input v-model:value="formState.phoneNumber1" size="middle" placeholder="Numero de téléphone principale" :disabled="isView"></a-input>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="phone2"
               type="text"
               class="w-full mt-10"
           >
             <a-row>
-              <a-col span="5"><label for="basic_phone">{{translations[language].phoneNumber}}: </label></a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.phone" size="middle" :placeholder="translations[language].phoneNumber" :disabled="isView"></a-input>
+              <a-col span="5">
+                <label for="basic_phone2">
+                  {{translations[language].phoneNumber}} 2:
+                </label>
               </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="isAdmin"
-              type="text"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5"><label for="basic_isAdmin">{{translations[language].role}}:</label></a-col>
               <a-col span="19">
-                <a-switch
-                    v-model:checked="formState.isAdmin"
-                    :checked-children="translations[language].admin"
-                    :un-checked-children="translations[language].manager"
-                    :disabled="isView"/>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="password"
-              type="text"
-              v-if="!isEdit && !isView"
-              :rules="[{ required: true, message: translations[language].errorPassword }]"
-              class="w-full mt-10 mb-10"
-          >
-            <a-row>
-              <a-col span="5"><label for="basic_password"><span class="required_toil">*</span> {{translations[language].password}}: </label></a-col>
-              <a-col span="19">
-                <a-input-password v-model:value="formState.password" size="middle" :placeholder="translations[language].password"/>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="confirmPassword"
-              type="text"
-              v-if="!isEdit && !isView"
-              :rules="[
-                  { required: true, message: translations[language].errorConfirmPassword },
-                  { validator: validateConfirmPassword }
-              ]"
-              class="w-full mt-10 mb-10"
-          >
-            <a-row>
-              <a-col span="5"><label for="basic_confirmPassword"><span class="required_toil">*</span> {{translations[language].confirmPassword}}: </label></a-col>
-              <a-col span="19">
-                <a-input-password v-model:value="formState.confirmPassword" size="middle" :placeholder="translations[language].confirmPasswordPlaceholder"/>
+                <a-input v-model:value="formState.phoneNumber2" size="middle" placeholder="Numero de téléphone sécondaire" :disabled="isView"></a-input>
               </a-col>
             </a-row>
           </a-form-item>

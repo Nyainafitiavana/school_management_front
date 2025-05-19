@@ -8,7 +8,7 @@ const BASE_URL_API: string = `${EnvApiConfig.host}:${EnvApiConfig.port}`;
 
 export const getUserMenuService = async (userId: string): Promise<NoPaginateData<IUserMenu[]>> => {
 
-  const response = await fetch(`${BASE_URL_API}${API.USER}/${userId}/rules`, {
+  const response = await fetch(`${BASE_URL_API}${API.USER}/${userId}/roles`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
