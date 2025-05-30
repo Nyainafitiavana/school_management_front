@@ -54,6 +54,7 @@ const MenuItems = computed(() => {
       icon: () => h(IconComponent),
       label: menu.designation,
       title: menu.designation,
+      onClick: () => navigateTo(menu.path || '#'),
     };
   });
 });
@@ -162,7 +163,7 @@ const MenuItems = computed(() => {
   const getAllUserMenu = async () => {
     try {
       const userMenu: NoPaginateData<IUserMenu[]> = await getUserMenuService(userId.value);
-      // Initialisation d'une Map pour éviter les doublons
+      // Initialisation dune Map pour éviter les doublons
       const menuMap = new Map<string, Menu>();
 
       userMenu.data.forEach((user: IUserMenu) => {
@@ -258,7 +259,7 @@ const MenuItems = computed(() => {
           <a-col span="12" class="flex justify-end">
             <div>
               <a-button class="btn--primary" size="middle" @click="handleLogout">
-                <template>
+                <template #icon>
                   <LogoutOutlined />
                 </template>
               </a-button>

@@ -1,7 +1,6 @@
 import {CustomError} from "~/composables/CustomError";
 import type {Paginate} from "~/composables/apiResponse.interface";
 import type {TStatus} from "~/composables/Status.interface";
-import type {FormCategory, FormSubject, ICategory, ISubject} from "~/composables/Subject/Subject.interface";
 import {getAccessToken} from "~/composables/api";
 import {EnvApiConfig} from "~/composables/Env.config";
 import type {FormLevel, FormSubjectLevel, ILevel, ISubjectLevel} from "~/composables/Level/level.interface";

@@ -1,6 +1,6 @@
 import type {IStatus} from "~/composables/Status.interface";
 import type {IUser} from "~/composables/User/User.interface";
-import type {FormSubject, ISubject} from "~/composables/Subject/Subject.interface";
+import type {ISubject} from "~/composables/Subject/Subject.interface";
 
 export interface ILevel {
     uuid: string;
