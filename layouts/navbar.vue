@@ -4,33 +4,21 @@ import {ref, computed, onMounted, reactive, h, watch, createVNode} from 'vue';
   import { RouteList } from '~/composables/Route';
   import {useLanguage} from "~/composables/states";
 import {
-  AppstoreAddOutlined,
-  AppstoreOutlined,
   BarChartOutlined,
   BookOutlined,
   CalendarOutlined,
-  ExclamationCircleOutlined,
-  FileSearchOutlined, KeyOutlined,
-  SettingOutlined,
-  ShopOutlined,
-  ShoppingCartOutlined,
-  SnippetsOutlined,
+  ExclamationCircleOutlined, KeyOutlined,
   StockOutlined,
   TeamOutlined,
-  ToolOutlined,
-  ToTopOutlined,
   UserOutlined,
-  VerticalAlignBottomOutlined,
-  WalletOutlined
 } from "@ant-design/icons-vue";
 import {translations} from "~/composables/translations";
 import type {LogoutInterface} from "~/composables/Auth/auth.interface";
 import {logoutUser, testTokenUser} from "~/composables/Auth/auth.service";
-import {getUserMenuService} from "~/composables/menu/menu.service";
 import type {NoPaginateData} from "~/composables/apiResponse.interface";
 import type {IUserMenu, Menu} from "~/composables/menu/menu.interface";
-import {insertOrUpdateUser} from "~/composables/User/user.service";
 import {handleInAuthorizedError} from "~/composables/CustomError";
+import {getUserMenuService} from "~/composables/User/user.service";
 
   // State
   const state = reactive({
@@ -54,7 +42,7 @@ const iconMap: Record<string, any> = {
   Subject: BookOutlined,
   SchoolYear: CalendarOutlined,
   Level: StockOutlined,
-  Privilege: KeyOutlined,
+  Role: KeyOutlined,
 };
 
 
@@ -66,7 +54,6 @@ const MenuItems = computed(() => {
       icon: () => h(IconComponent),
       label: menu.designation,
       title: menu.designation,
-      onClick: () => navigateTo(menu.path || '#'),
     };
   });
 });
@@ -102,8 +89,8 @@ const MenuItems = computed(() => {
       case RouteList.LEVEL:
       state.selectedKeys = ['Level'];
       break;
-      case RouteList.PRIVILEGE:
-      state.selectedKeys = ['Privilege'];
+      case RouteList.ROLE:
+      state.selectedKeys = ['Role'];
       break;
       default:
         state.selectedKeys = ['0'];
@@ -143,7 +130,7 @@ const MenuItems = computed(() => {
   const testToken = async () => {
     try {
       //Stay here if token validate
-      const data: LogoutInterface = await testTokenUser();
+      await testTokenUser();
     } catch (error) {
       notification.error({
         message: 'Login Failed',
@@ -153,7 +140,7 @@ const MenuItems = computed(() => {
 
       await localStorage.setItem('access_token', '');
       await localStorage.setItem('userId', '');
-      //Return to login if token invalidate
+      //Return to log in if token invalidate
       await navigateTo(RouteList.LOGIN);
     }
   };
@@ -271,7 +258,7 @@ const MenuItems = computed(() => {
           <a-col span="12" class="flex justify-end">
             <div>
               <a-button class="btn--primary" size="middle" @click="handleLogout">
-                <template #icon>
+                <template>
                   <LogoutOutlined />
                 </template>
               </a-button>
@@ -305,10 +292,5 @@ const MenuItems = computed(() => {
   background: #001529; /* Background color of the side */
   z-index: 1; /* Ensure the side is above other content */
   transition: width 0.2s; /* Smooth transition for width changes */
-}
-
-.logo {
-  height: 80px;
-  margin: 16px;
 }
 </style>

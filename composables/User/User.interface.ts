@@ -30,5 +30,11 @@ export interface FormStateUser {
 }
 
 export interface IUsersRoles {
+    uuid: string;
     roles: IRole;
+}
+
+export interface IDataUserRole {
+    roleId: string;
+    userId: string;
 }

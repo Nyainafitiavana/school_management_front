@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import {createVNode, h} from 'vue';
   import {
-    AButton, ATooltip,
+    AButton,
+    ATooltip,
     DeleteOutlined,
     ExclamationCircleOutlined,
     EyeOutlined,
@@ -9,33 +10,30 @@
     PlusOutlined,
     SearchOutlined,
   } from "#components";
-  import type {FormStateUser, IDataUserRole, IUser, IUsersRoles} from "~/composables/User/User.interface";
   import type {SelectValue} from "ant-design-vue/es/select";
   import {handleInAuthorizedError} from "~/composables/CustomError";
-  import {
-    deleteUserRoleService,
-    deleteUserService,
-    getAllUser,
-    getAllUserRolesService,
-    insertOrUpdateUser, insertUserRoleService
-  } from "~/composables/User/user.service";
   import type {Paginate} from "~/composables/apiResponse.interface";
   import type {FormInstance} from "ant-design-vue";
   import {STCodeList, type TStatus} from "~/composables/Status.interface";
   import {translations} from "~/composables/translations";
-  import {KeyOutlined} from "@ant-design/icons-vue";
+  import type {ISubjectLevel} from "~/composables/Level/level.interface";
   import type {SelectProps} from "ant-design-vue/lib";
-  import type {IRole} from "~/composables/Roles/role.interface";
-  import {getAllRolesService} from "~/composables/Roles/role.service";
+  import {DiffOutlined} from "@ant-design/icons-vue";
+  import type {FormMenuRole, FormRole, IRole, IRoleMenu} from "~/composables/Roles/role.interface";
+  import {deleteRoleService, getAllRolesService, insertOrUpdateRole} from "~/composables/Roles/role.service";
+  import type {IDataMenuRole, Menu} from "~/composables/menu/menu.interface";
+  import {
+    deleteMenuRoleService,
+    getAllMenuRoleService,
+    getAllMenuService,
+    insertOrUpdateMenuRole
+  } from "~/composables/menu/menu.service";
 
 
   interface Props {
     activePage: TStatus;
   }
-
-
   const props = defineProps<Props>();
-
   //This is a global state for language of the app
   const language = useLanguage();
   const loading = ref<boolean>(false);
@@ -44,42 +42,38 @@
   const pageSize = ref<number>(10);
   const currentPage = ref<number>(1);
   const totalPage = ref<number>(0);
-  const data = ref<IUser[]>([]);
+  const data = ref<IRole[]>([]);
   const isOpenModal = ref<boolean>(false);
+  const isOpenModalMenu = ref<boolean>(false);
   const isEdit = ref<boolean>(false);
   const isView = ref<boolean>(false);
-  const formRef = ref<FormInstance>();
-  const formRefUserRoles = ref<FormInstance>();
-  const userId = ref<string>('');
-  const formState = reactive<FormStateUser>({
-    firstName: null,
-    lastName: null,
-    email: null,
-    address: null,
-    phoneNumber1: null,
-    phoneNumber2: null,
-    isFullTime: false,
-    netSalaryPerMonth: null,
-    netSalaryPerHour: null,
-    monthlyWorkingHour: null,
+  const formRefRole = ref<FormInstance>();
+  const formRefMenuRole = ref<FormInstance>();
+  const roleId = ref<string>('');
+  const formState = reactive<FormRole>({designation: null,});
+  const formStateMenuRole = reactive<FormMenuRole>({
+    menuId: null, 
+    privilege: []
   });
-  const isOpenModalUserRoles = ref<boolean>(false);
-  const dataUserRoles = ref<IUsersRoles[]>([]);
-  const loadingUserRoles = ref<boolean>(false);
-  const formStateUserRoles = reactive<{roleId: string}>({
-    roleId: null
-  });
-  const optionsRoles = ref<SelectProps['options']>([]);
+  const optionsMenu = ref<SelectProps['options']>([]);
+  const optionsPrivilege = ref<SelectProps['options']>([
+    {label: 'Créer', value: 1},
+    {label: 'Visualiser', value: 2},
+    {label: 'Modifier', value: 3},
+    {label: 'Supprimer', value: 4}
+  ]);
   const filterOption = (input: string, option: any) => {
     return option?.label?.toLowerCase().includes(input.toLowerCase());
   };
-  const userRoleId = ref<string>('');
-
+  const dataRoleMenu = ref<IRoleMenu[]>([]);
+  const menuRoleId = ref<string>('');
+  const loadingMenu = ref<boolean>(false);
+  //*********Beginning of datatables column***************
   const activeActionsColumns = {
-    title: 'Actions',
+    title: h('div', { style: { textAlign: 'center' } }, ['Actions']),
     key: 'actions',
     width: 200,
-    customRender: ({ record }: { record: IUser }) => h('div', [
+    customRender: ({ record }: { record: IRole }) => h('div', { class: 'flex justify-center' }, [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -96,13 +90,13 @@
           onClick: () => handleEdit(record)
         }, [h(FormOutlined)]),
       ]),
-      h(ATooltip, { title: 'Gestion des rôles', color: '#E3B23EFF' }, [
+      h(ATooltip, { title: 'Gérer les menu', color: '#E3B23EFF' }, [
         h(AButton, {
           class: 'btn--warning-outline btn-tab',
           size: 'middle',
           style: { marginRight: '8px' },
-          onClick: () => handleManageUserRoles(record)
-        }, [h(KeyOutlined)]),
+          onClick: () => handleShowMenuRole(record)
+        }, [h(DiffOutlined)]),
       ]),
       h(ATooltip, { title: translations[language.value].delete, color: '#ff5959' }, [
         h(AButton, {
@@ -115,10 +109,10 @@
   };
 
   const deletedActionColumns = {
-    title: 'Action',
+    title: 'Actions',
     key: 'actions',
     width: 90,
-    customRender: ({ record }: { record: IUser }) => h('div', [
+    customRender: ({ record }: { record: IRole }) => h('div', [
       h(ATooltip, { title: translations[language.value].consult, color: '#05c5c5' }, [
         h(AButton, {
           class: 'btn--info-outline btn-tab',
@@ -130,43 +124,19 @@
     ])
   };
 
-  const columns = computed(() =>[
+  const columns = computed(() => [
     {
-      title: translations[language.value].lastName,
-      dataIndex: 'lastName',
-      key: 'lastName',
-    },
-    {
-      title: translations[language.value].firstName,
-      dataIndex: 'firstName',
-      key: 'firstName',
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: translations[language.value].phoneNumber,
-      dataIndex: 'phoneNumber1',
-      key: 'phone',
-      customRender: ({ text }: { text: string }) => text ? text : '---'
-    },
-    {
-      title: 'Rôles',
-      key: 'role',
-      customRender: ({ record }: { record: IUser }) => {
-        return record.UsersRoles
-            .map((userRole: IUsersRoles) => userRole.roles.designation)
-            .join(', ');
-      }
+      title: translations[language.value].designation,
+      dataIndex: 'designation',
+      key: 'designation',
+      width: 200,
     },
     {
       title: h('div', { style: { textAlign: 'center' } }, [translations[language.value].status]),
       key: 'status',
-      width: 120,
-      customRender: ({ record }: { record: IUser}) => h('div', [
-        record.status && (record.status.code === STCodeList.ACTIVE) ?
+      width: 200,
+      customRender: ({ record }: { record: IRole}) => h('div', [
+        record.status.code === STCodeList.ACTIVE ?
             h('div',
                 {
                   style: { textAlign: 'center', color: 'white', borderRadius: '10px' },
@@ -186,53 +156,67 @@
     props.activePage === STCodeList.ACTIVE ?  activeActionsColumns : deletedActionColumns,
   ]);
 
-  const columnsRoles = computed(() => [
+  const actionLabels = {
+    1: 'Créer',
+    2: 'Visualiser',
+    3: 'Modifier',
+    4: 'Supprimer'
+  }
+
+  const columnsMenuRole = computed(() => [
     {
-      title: 'Désignation',
+      title: h('div', { style: { textAlign: 'center' } }, ['Désignation']),
       key: 'designation',
-      dataIndex: ['roles', 'designation']
+      width: 150,
+      customRender: ({ record }: { record: IRoleMenu}) => h('div', [
+        `${record.menu ? record.menu.designation : ''}`
+      ])
+    },
+    {
+      title: h('div', { style: { textAlign: 'center' } }, ['Privilèges']),
+      key: 'privilege',
+      customRender: ({ record }: { record: IRoleMenu }) => {
+        const privileges = JSON.parse(record.privilege);
+        return privileges
+            .map((item) => actionLabels[item] || 'Inconnu')
+            .join(', ');
+      }
     },
     {
       title: 'Actions',
       key: 'actions',
-      width: 200,
-      customRender: ({ record }: { record: IUsersRoles }) => h('div', [
+      width: 110,
+      customRender: ({ record }: { record: IRoleMenu }) => h('div', [
+        h(ATooltip, { title: translations[language.value].update, color: 'blue' }, [
+          h(AButton, {
+            class: 'btn--primary-outline btn-tab',
+            size: 'middle',
+            style: { marginRight: '8px' },
+            onClick: () => handleEditMenuRole(record)
+          }, [h(FormOutlined)]),
+        ]),
         h(ATooltip, { title: translations[language.value].delete, color: '#ff5959' }, [
           h(AButton, {
             class: 'btn--danger-outline btn-tab',
             size: 'middle',
-            disabled: record.roles.designation == 'Proviseur',
-            onClick: () => handleDeleteUserRole(record)
+            onClick: () => handleDeleteMenuRole(record)
           }, [h(DeleteOutlined)])
         ]),
       ])
-    }
+    },
   ]);
+  //*********End of datatables column***************
 
   //**********Reset all value and validator form*******
   const resetForm = () => {
-    if (formRef.value) {
-      formRef.value.resetFields();
+    if (formRefRole.value) {
+      formRefRole.value.resetFields();
     }
 
-    if (formRefUserRoles.value) {
-      formRefUserRoles.value.resetFields();
+    if (formRefMenuRole.value) {
+      formRefMenuRole.value.resetFields();
     }
   };
-
-  const resetFieldValues = (
-      data: IUser | null
-  ) => {
-    formState.firstName = data && data.firstName  ? data.firstName : null;
-    formState.lastName = data && data.lastName ? data.lastName : null;
-    formState.email = data && data.email ? data.email : null;
-    formState.phoneNumber1 = data && data.phoneNumber1 ? data.phoneNumber1 : null;
-    formState.phoneNumber2 = data && data.phoneNumber2 ? data.phoneNumber2 : null;
-    formState.isFullTime = data ? data.isFullTime : false;
-    formState.netSalaryPerMonth = data && data.netSalaryPerMonth ? data.netSalaryPerMonth : null;
-    formState.netSalaryPerHour = data && data.netSalaryPerHour ? data.netSalaryPerHour : null;
-    formState.monthlyWorkingHour = data && data.monthlyWorkingHour ? data.monthlyWorkingHour : null;
-  }
 
   //************Beginning of modal actions*********************
   const handleShowModal = (isEditMode: boolean, isViewMode: boolean) => {
@@ -246,54 +230,50 @@
     isOpenModal.value = false;
   }
 
-  const handleShowModalUserRoles = () => {
-    isOpenModalUserRoles.value = true;
-    getAllDataUserRoles();
+  const handleShowModalMenuRole = () => {
+    isOpenModalMenu.value = true;
+    getAllDataMenuRole();
   }
 
-  const handleCancelActionUserRoles = () => {
+  const handleCancelActionMenuRole = () => {
     resetForm();
+    formStateMenuRole.menuId = null;
+    formStateMenuRole.privilege = [];
+
+    isEdit.value = false;
   }
   //************End of modal actions*********************
 
-  //************Add user button action*********
-  const handleAddUser = () => {
+  //************Add button action*********
+  const handleAdd = () => {
     resetForm();
-    resetFieldValues(null);
+    formState.designation = null;
     handleShowModal(false, false);
   }
 
 
   //************Beginning of actions datatable button method**********
-  const handleView = (record: IUser) => {
+  const handleView = (record: IRole) => {
     resetForm();
-    resetFieldValues(record);
+    formState.designation = record.designation;
 
     handleShowModal(false, true);
   };
 
-  const handleEdit = (record: IUser) => {
+  const handleEdit = (record: IRole) => {
     resetForm();
-    resetFieldValues(record);
+    formState.designation = record.designation;
 
     if (record.uuid != null) {
-      userId.value = record.uuid;
+      roleId.value = record.uuid;
     }
 
     handleShowModal(true, false);
   };
 
-  const handleManageUserRoles = (record: IUser) => {
+  const handleDelete = (record: IRole) => {
     if (record.uuid != null) {
-      userId.value = record.uuid;
-    }
-
-    handleShowModalUserRoles();
-  };
-
-  const handleDelete = (record: IUser) => {
-    if (record.uuid != null) {
-      userId.value = record.uuid;
+      roleId.value = record.uuid;
     }
 
     Modal.confirm({
@@ -304,14 +284,33 @@
       cancelText: translations[language.value].no,
       onOk: async () => {
         loadingBtn.value = true;
-        await deleteUser();
+        await deleteRole();
       }
     });
   };
 
-  const handleDeleteUserRole = (record: IUsersRoles) => {
+  const handleShowMenuRole = (record: IRole) => {
     if (record.uuid != null) {
-      userRoleId.value = record.uuid;
+      roleId.value = record.uuid;
+    }
+    resetForm();
+    formStateMenuRole.menuId = null;
+    formStateMenuRole.privilege = [];
+    handleShowModalMenuRole(false, false);
+  };
+
+  const handleEditMenuRole = (record: IRoleMenu) => {
+    resetForm();
+    formStateMenuRole.menuId = record.menu.uuid;
+    formStateMenuRole.privilege = JSON.parse(record.privilege);
+    menuRoleId.value = record.uuid;
+    isEdit.value = true;
+    isView.value = false;
+  };
+
+  const handleDeleteMenuRole = (record: ISubjectLevel) => {
+    if (record.uuid != null) {
+      menuRoleId.value = record.uuid;
     }
 
     Modal.confirm({
@@ -322,13 +321,13 @@
       cancelText: translations[language.value].no,
       onOk: async () => {
         loadingBtn.value = true;
-        await deleteUserRole();
+        await deleteMenuRole();
       }
     });
   };
   //************End of actions datatable button method**********
 
-  //*******Global method on submit user form********************
+  //*******Global method on submit form********************
   const onSubmitForm = async () => {
     Modal.confirm({
       title: translations[language.value].confirmationTitle,
@@ -340,15 +339,15 @@
         loadingBtn.value = true;
 
         if (isEdit.value) {
-          await updateUser();
+          await updateRole();
         } else {
-          await insertUser();
+          await insertRole();
         }
       }
     });
   };
 
-  const onSubmitFormUserRoles = async () => {
+  const onSubmitFormMenuRole = async () => {
     Modal.confirm({
       title: translations[language.value].confirmationTitle,
       icon: createVNode(ExclamationCircleOutlined),
@@ -358,17 +357,23 @@
       onOk: async () => {
         loadingBtn.value = true;
 
-        await insertUserRole();
+        if (isEdit.value) {
+          await updateMenuRole();
+        } else {
+          await insertMenuRole();
+        }
       }
     });
   };
   //******************Beginning of CRUD controller**************
-  const insertUser = async () => {
-    const dataForm: FormStateUser = formState;
+  const insertRole = async () => {
+    const dataForm: FormRole = {
+      designation: formState.designation,
+    };
 
     try {
       //the params userId is null here because we are in the insert method
-      await insertOrUpdateUser(dataForm, null, 'POST');
+      await insertOrUpdateRole(dataForm, null, 'POST');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -381,7 +386,7 @@
       });
 
       //reload data
-      await getAllDataUser();
+      await getAllDataRole();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -401,12 +406,14 @@
     }
   }
 
-  const updateUser = async () => {
-    const dataForm: FormStateUser = formState;
+  const updateRole = async () => {
+    const dataForm: FormRole = {
+      designation: formState.designation,
+    };
 
     try {
       //Call operation API in service
-      await insertOrUpdateUser(dataForm, userId.value, 'PATCH');
+      await insertOrUpdateRole(dataForm, roleId.value, 'PATCH');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -418,7 +425,7 @@
       });
 
       //reload data
-      await getAllDataUser();
+      await getAllDataRole();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -438,11 +445,11 @@
     }
   }
 
-  const deleteUser = async () => {
+  const deleteRole = async () => {
 
     try {
       //Call operation API in service
-      await deleteUserService(userId.value);
+      await deleteRoleService(roleId.value);
       //turn off of loading button and close modal
       loadingBtn.value = false;
       isOpenModal.value = false;
@@ -454,7 +461,7 @@
       });
 
       //reload data
-      await getAllDataUser();
+      await getAllDataRole();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -474,13 +481,13 @@
     }
   }
 
-  const getAllDataUser = async () => {
+  const getAllDataRole = async () => {
     try {
       loading.value = true;
-      const response: Paginate<IUser[]> = await getAllUser(
-          keyword.value,
+      const response: Paginate<IRole[]> = await getAllRolesService(
           pageSize.value,
           currentPage.value,
+          keyword.value,
           props.activePage);
       data.value = response.data;
       totalPage.value = response.totalRows;
@@ -497,19 +504,24 @@
 
       // Show error notification
       notification.error({
-        message: 'Error',
+        message: translations[language.value].error,
         description: (error as Error).message,
         class: 'custom-error-notification'
       });
     }
   }
 
-  const getAllDataUserRoles = async () => {
+  const getAllDataMenu = async () => {
     try {
-      loadingUserRoles.value = true;
-      const response: Paginate<IUsersRoles[]> = await getAllUserRolesService(userId.value);
-      dataUserRoles.value = response.data;
-      loadingUserRoles.value = false;
+      const response: NoPaginateData<Menu[]> = await getAllMenuService();
+
+      response.data.map((item: Menu) => {
+        if (optionsMenu.value) {
+          optionsMenu.value.push({ value: item.uuid, label: item.designation });
+        }
+      });
+
+      await nextTick(); // Ensure the DOM updates before proceeding
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -519,85 +531,6 @@
           return;
         }
       }
-
-      // Show error notification
-      notification.error({
-        message: 'Error',
-        description: (error as Error).message,
-        class: 'custom-error-notification'
-      });
-    }
-  }
-
-  const getAllDataRoles = async () => {
-    try {
-      const response: Paginate<IRole[]> = await getAllRolesService(
-          '',
-          '',
-          ''
-      );
-
-      response.data.map((item: IRole) => {
-        if (optionsRoles.value) {
-          optionsRoles.value.push({ value: item.uuid, label: `${item.designation}` });
-        }
-      });
-
-      await nextTick();
-    } catch (error) {
-      //Verification code status if equal 401 then we redirect to log in
-      if (error instanceof CustomError) {
-        if (error.status === 401) {
-          //call the global handle action if in authorized
-          handleInAuthorizedError(error);
-          return;
-        }
-      }
-
-      // Show error notification
-      notification.error({
-        message: 'Error',
-        description: (error as Error).message,
-        class: 'custom-error-notification'
-      });
-    }
-  }
-
-  const insertUserRole = async () => {
-    const dataForm: IDataUserRole[] = [
-      {
-        userId: userId.value,
-        roleId: formStateUserRoles.roleId
-      }
-    ];
-    try {
-      await insertUserRoleService(dataForm);
-      //turn off of loading button and close modal
-      loadingBtn.value = false;
-
-      // Show success notification
-      notification.success({
-        message: translations[language.value].success,
-        description: translations[language.value].successDescription,
-        class: 'custom-success-notification'
-      });
-
-      formStateUserRoles.roleId = null;
-      //reload data
-      await getAllDataUserRoles();
-      await getAllDataUser();
-    } catch (error) {
-      //Verification code status if equal 401 then we redirect to log in
-      if (error instanceof CustomError) {
-        if (error.status === 401) {
-          //call the global handle action if in authorized
-          handleInAuthorizedError(error);
-          return;
-        }
-      }
-
-      loadingBtn.value = false;
-      formStateUserRoles.roleId = null;
 
       // Show error notification
       notification.error({
@@ -608,10 +541,16 @@
     }
   }
 
-  const deleteUserRole = async () => {
+  const insertMenuRole = async () => {
+    const dataForm: IDataMenuRole = {
+      roleId: roleId.value,
+      menuId: formStateMenuRole.menuId,
+      privilege: JSON.stringify(formStateMenuRole.privilege),
+    };
+
     try {
-      //Call operation API in service
-      await deleteUserRoleService(userRoleId.value);
+      //the params id is null here because we are in the insert method
+      await insertOrUpdateMenuRole([dataForm], 'POST');
       //turn off of loading button and close modal
       loadingBtn.value = false;
       // Show success notification
@@ -620,10 +559,116 @@
         description: translations[language.value].successDescription,
         class: 'custom-success-notification'
       });
+      //reset form
+      resetForm();
+      formStateMenuRole.menuId = null;
+      formStateMenuRole.privilege = [];
+      //reload data
+      await getAllDataMenuRole();
+    } catch (error) {
+      //Verification code status if equal 401 then we redirect to log in
+      if (error instanceof CustomError) {
+        if (error.status === 401) {
+          //call the global handle action if in authorized
+          handleInAuthorizedError(error);
+          return;
+        }
+      }
+
+      // Show error notification
+      notification.error({
+        message: translations[language.value].error,
+        description: (error as Error).message,
+        class: 'custom-error-notification'
+      });
+    }
+  }
+
+  const updateMenuRole = async () => {
+    const dataForm = {
+      menuRoleId: menuRoleId.value,
+      privilege: JSON.stringify(formStateMenuRole.privilege),
+    };
+
+    try {
+      //Call operation API in service
+      await insertOrUpdateMenuRole([dataForm], 'PATCH');
+      //turn off of loading button and close modal
+      loadingBtn.value = false;
+      resetForm();
+      formStateMenuRole.menuId = null;
+      formStateMenuRole.privilege = [];
+      isEdit.value = false;
+      // Show success notification
+      notification.success({
+        message: translations[language.value].success,
+        description: translations[language.value].successDescription,
+        class: 'custom-success-notification'
+      });
 
       //reload data
-      await getAllDataUserRoles();
-      await getAllDataUser();
+      await getAllDataMenuRole();
+    } catch (error) {
+      //Verification code status if equal 401 then we redirect to log in
+      if (error instanceof CustomError) {
+        if (error.status === 401) {
+          //call the global handle action if in authorized
+          handleInAuthorizedError(error);
+          return;
+        }
+      }
+
+      // Show error notification
+      notification.error({
+        message: translations[language.value].error,
+        description: (error as Error).message,
+        class: 'custom-error-notification'
+      });
+    }
+  }
+
+  const getAllDataMenuRole = async () => {
+    try {
+      loadingMenu.value = true;
+      const response: NoPaginateData<IRoleMenu[]> = await getAllMenuRoleService(roleId.value);
+      dataRoleMenu.value = response.data;
+      loadingMenu.value = false;
+    } catch (error) {
+      //Verification code status if equal 401 then we redirect to log in
+      if (error instanceof CustomError) {
+        if (error.status === 401) {
+          //call the global handle action if in authorized
+          handleInAuthorizedError(error);
+          return;
+        }
+      }
+
+      // Show error notification
+      notification.error({
+        message: translations[language.value].error,
+        description: (error as Error).message,
+        class: 'custom-error-notification'
+      });
+    }
+  }
+
+  const deleteMenuRole = async () => {
+
+    try {
+      //Call operation API in service
+      await deleteMenuRoleService(menuRoleId.value);
+      //turn off of loading button and close modal
+      loadingBtn.value = false;
+      isOpenModal.value = false;
+      // Show success notification
+      notification.success({
+        message: translations[language.value].success,
+        description: translations[language.value].successDescription,
+        class: 'custom-success-notification'
+      });
+
+      //reload data
+      await getAllDataMenuRole();
     } catch (error) {
       //Verification code status if equal 401 then we redirect to log in
       if (error instanceof CustomError) {
@@ -646,25 +691,25 @@
 
   //******************Beginning of filter and paginator methods****
   const handleClickPaginator = () => {
-    getAllDataUser();
+    getAllDataRole();
   };
 
   const handleChangePageSize = (value: SelectValue) => {
     pageSize.value = Number(value);
     currentPage.value = 1;
-    getAllDataUser();
+    getAllDataRole();
   };
 
   const handleSearch = () => {
     currentPage.value = 1;
-    getAllDataUser();
+    getAllDataRole();
   }
   //******************End filter of and paginator methods****
 
 
   onMounted(() => {
-    getAllDataUser();
-    getAllDataRoles();
+    getAllDataRole();
+    getAllDataMenu();
   })
 </script>
 
@@ -684,8 +729,9 @@
       </a-select>
       <span> / page</span>
     </a-col>
+
     <a-col>
-      <a-button :icon="h(PlusOutlined)" @click="handleAddUser" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success">{{translations[language].add}}</a-button>
+      <a-button :icon="h(PlusOutlined)" @click="handleAdd" v-if="props.activePage === STCodeList.ACTIVE" class="btn--success">{{translations[language].add}}</a-button>
     </a-col>
     <a-col class="w-full flex justify-start md:justify-start lg:justify-end">
       <a-input type="text" class="w-40 md:w-40 lg:w-64" v-model:value="keyword" />&nbsp;
@@ -717,23 +763,23 @@
           @prevClick="handleClickPaginator"
           @change="handleClickPaginator"
           @nextClick="handleClickPaginator"
-          :showSizeChanger="false" />
+          :showSizeChanger="false"
+      />
     </a-col>
   </a-row>
-  <!--Modal user-->
+  <!--Role modal-->
   <a-modal
       v-model:open="isOpenModal"
       closable
       :footer="null"
-      :title="translations[language].user"
+      title="Rôle"
       style="top: 20px"
       @ok=""
-      width="1000px"
   >
     <a-row class="w-full">
       <a-col class="w-full">
         <a-form
-            ref="formRef"
+            ref="formRefRole"
             :model="formState"
             name="basic"
             layout="inline"
@@ -741,162 +787,18 @@
             @finish="onSubmitForm"
         >
           <a-form-item
-              name="lastName"
+              name="designation"
               type="text"
-              :Roles="[{ required: true, message: translations[language].errorLastName }]"
-              class="w-full mt-10"
+              :roles="[{ required: true, message: translations[language].errorDesignation }]"
+              class="w-full mt-5"
           >
-            <a-row>
-              <a-col span="5"><label for="basic_lastName"><span class="required_toil">*</span> {{translations[language].lastName}}:</label></a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.lastName" size="middle" :placeholder="translations[language].lastName" :disabled="isView"></a-input>
+            <a-row class="w-full md:gap-4 flex flex-col md:flex-row lg:flex-row">
+              <a-col class="w-48"><label for="basic_designation"><span class="required_toil">*</span> {{translations[language].designation}}:</label></a-col>
+              <a-col class="w-64">
+                <a-input v-model:value="formState.designation" size="large" :placeholder="translations[language].designation" :disabled="isView"></a-input>
               </a-col>
             </a-row>
           </a-form-item>
-          <a-form-item
-              name="firstName"
-              type="text"
-              :Roles="[{ required: true, message: translations[language].errorFirstName }]"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5"><label for="basic_firstName"><span class="required_toil">*</span> {{translations[language].firstName}}:</label></a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.firstName" size="middle" :placeholder="translations[language].firstName" :disabled="isView"></a-input>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="email"
-              type="email"
-              :Roles="[{ required: true, type: 'email', message: translations[language].errorEmail }]"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5">
-                <label for="basic_email">
-                  <span class="required_toil">*</span>
-                  Email:
-                </label>
-              </a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.email" size="middle" placeholder="Email" :disabled="isView"></a-input>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="phone1"
-              type="text"
-              :Roles="[{ required: true, message: 'Veuillez entrer votre numero de téléphone principale' }]"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5">
-                <label for="basic_phone1">
-                  <span class="required_toil">*</span>
-                  {{translations[language].phoneNumber}} 1:
-                </label>
-              </a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.phoneNumber1" size="middle" placeholder="Numero de téléphone principale" :disabled="isView"></a-input>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <a-form-item
-              name="phone2"
-              type="text"
-              class="w-full mt-10"
-          >
-            <a-row>
-              <a-col span="5">
-                <label for="basic_phone2">
-                  {{translations[language].phoneNumber}} 2:
-                </label>
-              </a-col>
-              <a-col span="19">
-                <a-input v-model:value="formState.phoneNumber2" size="middle" placeholder="Numero de téléphone sécondaire" :disabled="isView"></a-input>
-              </a-col>
-            </a-row>
-          </a-form-item>
-          <div class="w-full h-72 mt-5 border-2 border-b-gray-200 rounded-lg">
-            <a-typography-title :level="5" class="text-center mt-5">Paramètrage salariale</a-typography-title>
-            <hr>
-            <a-form-item
-                name="is_full_time"
-                type="text"
-                class="w-full m-5"
-            >
-              <a-row>
-                <a-col span="5">
-                  <label for="basic_is_full_time">
-                    Mode de travail:
-                  </label>
-                </a-col>
-                <a-col span="19">
-                  <a-switch v-model:checked="formState.isFullTime" checked-children="Plein temps" un-checked-children="Temps partiel" :disabled="isView"/>
-                </a-col>
-              </a-row>
-            </a-form-item>
-            <a-form-item
-                name="salary_month"
-                type="number"
-                class="w-full m-5"
-            >
-              <a-row>
-                <a-col span="5">
-                  <label for="basic_salary_month">Salaire mensuel net:</label>
-                </a-col>
-                <a-col span="19">
-                  <a-input-number
-                      v-model:value="formState.netSalaryPerMonth"
-                      :min="0"
-                      :disabled="isView || !formState.isFullTime"
-                      class="w-64"
-                  />
-                  <span class="ml-2">(Ariary)</span>
-                </a-col>
-              </a-row>
-            </a-form-item>
-            <a-form-item
-                name="salary_hour"
-                type="number"
-                class="w-full m-5"
-            >
-              <a-row>
-                <a-col span="5">
-                  <label for="basic_salary_hour">Salaire par heure net:</label>
-                </a-col>
-                <a-col span="19">
-                  <a-input-number
-                      v-model:value="formState.netSalaryPerHour"
-                      :min="0"
-                      :disabled="isView || formState.isFullTime"
-                      class="w-64"
-                  />
-                  <span class="ml-2">(Ariary)</span>
-                </a-col>
-              </a-row>
-            </a-form-item>
-            <a-form-item
-                name="salary_working_hour"
-                type="number"
-                class="w-full m-5"
-            >
-              <a-row>
-                <a-col span="5">
-                  <label for="basic_salary_working_hour">Temps de travail mensuel:</label>
-                </a-col>
-                <a-col span="19">
-                  <a-input-number
-                      v-model:value="formState.netSalaryPerHour"
-                      :min="0"
-                      :disabled="isView || formState.isFullTime"
-                  />
-                  <span class="ml-2">(Heure(s))</span>
-                </a-col>
-              </a-row>
-            </a-form-item>
-          </div>
           <a-row class="mt-10">
             <a-form-item class="w-full flex justify-start">
               <a-button class="btn btn--default" size="middle" @click="handleCloseModal">{{translations[language].cancel}}</a-button>
@@ -913,76 +815,93 @@
       </a-col>
     </a-row>
   </a-modal>
-  <!--Role modal-->
+  <!--Menu role modal-->
   <a-modal
-      v-model:open="isOpenModalUserRoles"
+      v-model:open="isOpenModalMenu"
       closable
       :footer="null"
-      title="Rôles"
+      title="Menu par rôles"
       style="top: 20px"
       @ok=""
-      width="600px"
+      width="768px"
   >
     <a-row class="w-full">
       <a-col class="w-full">
         <a-form
-            ref="formRefUserRoles"
-            :model="formStateUserRoles"
-            name="user_roles"
+            ref="formRefMenuRole"
+            :model="formStateMenuRole"
+            name="subject_level"
             layout="inline"
             autocomplete="off"
-            @finish="onSubmitFormUserRoles"
+            @finish="onSubmitFormMenuRole"
             style="border: 1px solid #bfbfbf; border-radius: 10px;"
         >
           <a-form-item
-              name="role"
-              :roles="[{ required: true, message: 'Veuillez selectionner un rôle !' }]"
+              name="menu"
+              :roles="[{ required: true, message: 'Veuillez selectionner un menu !' }]"
               class="w-10/12 m-5"
           >
             <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
-              <a-col class="w-12">
-                <label for="basic_role">
+              <a-col class="w-24">
+                <label for="basic_menu">
                   <span class="required_toil">*</span>
-                  Rôle :
+                  Menu :
                 </label>
               </a-col>
-              <a-col class="w-40 md:w-48 lg:w-64">
+              <a-col class="w-full md:w-96 lg:w-96">
                 <a-select
-                    v-model:value="formStateUserRoles.roleId"
+                    v-model:value="formStateMenuRole.menuId"
                     show-search
-                    placeholder="Selectionner un rôle"
-                    :options="optionsRoles"
+                    placeholder="Selectionner un menu"
+                    :options="optionsMenu"
                     :filter-option="filterOption"
+                ></a-select>
+              </a-col>
+            </a-row>
+          </a-form-item>
+          <a-form-item
+              name="privilege"
+              class="w-10/12 m-5"
+          >
+            <a-row class="flex gap-1 md:gap-16 lg:gap-16 justify-start flex-col md:flex-row lg:flex-row">
+              <a-col class="w-24">
+                <label for="basic_privilege">Privilège(s) :</label>
+              </a-col>
+              <a-col class="w-full md:w-96 lg:w-96">
+                <a-select
+                    v-model:value="formStateMenuRole.privilege"
+                    mode="multiple"
+                    placeholder="Selectionner un menu"
+                    :options="optionsPrivilege"
                 ></a-select>
               </a-col>
             </a-row>
           </a-form-item>
           <a-row class="w-10/12 m-5">
             <a-form-item class="w-full flex justify-start">
-              <a-button class="btn btn--default" size="middle" @click="handleCancelActionUserRoles">{{translations[language].cancel}}</a-button>
+              <a-button class="btn btn--default" size="middle" @click="handleCancelActionMenuRole">{{translations[language].cancel}}</a-button>
               <a-button
                   class="btn btn--primary ml-5"
                   html-type="submit"
-                  :loading="loadingBtn"
+                  :loading="loading"
               >{{translations[language].save}}</a-button>
             </a-form-item>
           </a-row>
         </a-form>
-        <!--Datatable-->
-        <a-row :gutter="{ xs: 8, sm: 16, md: 24, lg: 32 }">
-          <a-col class="mt-8" span="24">
-            <a-spin :spinning="loadingUserRoles" size="large">
-              <a-table
-                  class="w-full"
-                  :columns="columnsRoles"
-                  :data-source="dataUserRoles"
-                  :pagination="false"
-                  :scroll="{ x: 360, y: 480 }"
-                  bordered
-              />
-            </a-spin>
-          </a-col>
-        </a-row>
+      </a-col>
+    </a-row>
+    <a-row class="w-full">
+      <a-col class="mt-8" span="24">
+        <a-spin :spinning="loadingMenu" size="large">
+          <a-table
+              class="w-full"
+              :columns="columnsMenuRole"
+              :data-source="dataRoleMenu"
+              :pagination="false"
+              :scroll="{ x: 700, y: 480 }"
+              bordered
+          />
+        </a-spin>
       </a-col>
     </a-row>
   </a-modal>

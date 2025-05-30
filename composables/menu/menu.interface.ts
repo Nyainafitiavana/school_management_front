@@ -16,4 +16,11 @@ export interface Menu {
   designation: string;
   path: string;
   code: string;
+  order: string;
+}
+
+export interface IDataMenuRole {
+  roleId: string;
+  menuId: string;
+  privilege: string;
 }

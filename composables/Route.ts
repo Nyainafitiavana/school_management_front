@@ -9,5 +9,5 @@ export const RouteList = {
     'SUBJECT': '/matiers',
     'SCHOOL_YEAR': '/annee_scolaires',
     'LEVEL': '/niveaux',
-    'PRIVILEGE': '/privileges',
+    'ROLE': '/roles',
 };

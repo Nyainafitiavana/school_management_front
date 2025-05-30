@@ -5,6 +5,8 @@ export const API = {
     "USER" : "/api/users",
     "SUBJECT" : "/api/subjects",
     "LEVEL" : "/api/level",
+    "ROLE" : "/api/roles",
+    "MENU" : "/api/menu",
 }
 
 export const getAccessToken = (): string | null => {
